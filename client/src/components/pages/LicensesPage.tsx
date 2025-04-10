@@ -1,54 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import "../../stylesheets/categories.css"
-import AddLicenseGrid from "../AddLicenseGrid";
+import AddLicenseGrid from "../AddLicenseGrid.tsx";
+import MappingDisplay from "../MappingDisplay.tsx";
+import { LicenseData, Mapping } from "../../types.t";
 
-function MappingDisplay({ mapping }) {
-    return <div className="mappingDisplay">
-        <table>
-            <thead>
-                <tr>
-                    <th>Source</th>
-                    <th>Account Name</th>
-                    <th>Controller</th>
-                    <th>Connect Status</th>
-                    <th>Location ID</th>
-                    <th>DCode</th>
-                    <th>Dealer Name</th>
-                    <th>Exclude Assist</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>C4</strong></td>
-                    <td>{mapping.Name}</td>
-                    <td>{mapping.CertificateCommonName}</td>
-                    <td>{mapping.ConnectStatus}</td>
-                    <td>{mapping.ovrc_location_id}</td>
-                    <td>{mapping.DCodes}</td>
-                    <td>{mapping.dealerName}</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td><strong>OvrC</strong></td>
-                    <td>{mapping.automationAccounts && mapping.automationAccounts.map(m => m.accountName).join(', ')}</td>
-                    <td>{mapping.mac}</td>
-                    <td>{mapping.automationAccounts ? "Mapped" : "Unmapped"}</td>
-                    <td>{mapping.locationId}</td>
-                    <td>{mapping.dCode}</td>
-                    <td>{mapping.companyName}</td>
-                    <td>{mapping.automationAccounts && mapping.automationAccounts.map(m => m.excludeAssist).join(', ')}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-}
+function LicensesDisplay({ licenseData } : { licenseData: LicenseData[] }) {
+    const [addingFromRow, setAddingFromRow] = React.useState<LicenseData | null>(null);
 
-
-function LicensesDisplay({ licenseData }) {
-    const [addingFromRow, setAddingFromRow] = React.useState(null);
-
-
-    console.log(licenseData);
     return <div className="mappingDisplay">
         <table>
             <thead>
@@ -80,18 +38,18 @@ function LicensesDisplay({ licenseData }) {
 
 
 export default function LicensesPage() {
-    const [commonNameOrMac, setCommonNameOrMac] = React.useState("");
-    const [enableButton, setEnableButton] = React.useState(false);
-    const [mapping, setMapping] = React.useState(null);
-    const [licenseData, setLicenseData] = React.useState(null);
+    const [commonNameOrMac, setCommonNameOrMac] = useState<string>("");
+    const [enableButton, setEnableButton] = useState<boolean>(false);
+    const [mapping, setMapping] = useState<Mapping | null>(null);
+    const [licenseData, setLicenseData] = useState(null);
 
-    const updateCommonName = event => {
+    const updateCommonName = (event: { target: { value: any; }; }) => {
         const value = event.target.value;
         setEnableButton(value.length > 0);
         setCommonNameOrMac(value);
     }
 
-    const loadLicenses = async (mapping) => {
+    const loadLicenses = async (mapping : Mapping) => {
         const response = await fetch(`http://localhost:3003/api/licenses/${mapping.Name}`);
         const data = await response.json();
         if (data.error) {

@@ -1,4 +1,6 @@
+import React from "react";
 import { useEffect, useState } from "react";
+import { LicenseData, LicenseRequestBody } from "../types.t";
 
 
 async function licenseProcessCall(requestBody) {
@@ -17,7 +19,7 @@ async function licenseProcessCall(requestBody) {
 
 }
 
-function populateLicenseAsAddAssist(licenseRow) {
+function populateLicenseAsAddAssist(licenseRow : LicenseData) : LicenseRequestBody {
     //Control4 Assist | Control4 Assist Premium
     return {
         productName: "Control4 Assist Premium",
@@ -36,14 +38,18 @@ function populateLicenseAsAddAssist(licenseRow) {
 }
 
 
-export default function AddLicenseGrid({ licenseRow }) {
-    const [ requestBody, setRequestBody ] = useState({});
+export default function AddLicenseGrid({ licenseRow } : { licenseRow: LicenseData }) {
+    const [ requestBody, setRequestBody ] = useState<LicenseRequestBody | null>(null);
 
     useEffect(() => {
         if (licenseRow) {
             setRequestBody(populateLicenseAsAddAssist(licenseRow));
         }
     }, [licenseRow]);
+
+    if (!requestBody) {
+        return <div className="mappingDisplay">Loading...</div>;
+    }
 
     return (
         <div className="mappingDisplay">

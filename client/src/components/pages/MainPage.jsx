@@ -6,12 +6,12 @@ import {
   Route,
   Routes
 } from "react-router-dom";
-import MappingPage from "./MappingPage";
+import MappingPage from "./MappingPage.tsx";
 import AdyenStitchingPage from "./AdyenStitchingPage";
 import DCodeValidationPage from "./DCodeValidationPage";
 import AdyenStitchingPage2 from "./AdyenStitchingPage2";
-import LicensesPage from "./LicensesPage";
-import ShowroomDemoLicensesPage from "./ShowroomDemoLicensesPage";
+import LicensesPage from "./LicensesPage.tsx";
+import ShowroomDemoLicensesPage from "./ShowroomDemoLicensesPage.tsx";
 
 function MainPage() {
   const [date, setDate] = useState(new Date());
