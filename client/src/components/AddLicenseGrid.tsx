@@ -1,7 +1,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { LicenseData, LicenseRequestBody } from "../types.t";
-import KeyValueRow from "./KeyValueRow";
+import KeyValueRow from "./KeyValueRow.tsx";
 
 
 async function licenseProcessCall(requestBody: LicenseRequestBody) {
