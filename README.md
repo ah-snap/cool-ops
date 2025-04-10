@@ -21,6 +21,15 @@ ssh -i ~/.ssh/prodovrckey.pem -N -o \
     ubuntu@localhost -D 9925
 ```
 
+Also you need to create a .env file with the following values
+```
+mongoConnectionString="mongodb+srv://[user]:[password]@csprod-tsqwb.mongodb.net/?authMechanism=SCRAM-SHA-1&authSource=admin&tls=true&proxyHost=localhost&proxyPort=9925"
+security16User="[user]"
+security16Password="[password]"
+security16Database="Security_16"
+```
+
+
 Starting server
 ```
 cd ./server
