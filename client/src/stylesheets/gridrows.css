@@ -1,0 +1,11 @@
+.slightly-overbudget {
+  background-color: rgba(255, 0, 0, 0.201);
+}
+
+.overbudget {
+  background-color: rgba(255, 0, 0, 0.48);
+}
+
+.very-overbudget {
+  background-color: red;
+}

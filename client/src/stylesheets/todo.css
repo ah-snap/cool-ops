@@ -1,0 +1,30 @@
+.navigationWrapper {
+  padding: .5em;
+}
+
+.todoContainer {
+  width: 50%;
+  border-radius: 1em;
+  margin: 1em;
+  background: rgb(41, 40, 40);
+  color: white;
+  padding: .5em;
+
+  li {
+    padding: .5em;
+    font-size: large;
+    border-radius: 10px;
+  }
+
+  .link {
+    color: rgb(113, 154, 231);
+    text-decoration: none;
+  }
+
+  .link:hover {
+    color: rgb(155, 179, 225);
+    background-color: rgba(155, 179, 225, 0.31);
+    cursor: pointer;
+  }
+}
+

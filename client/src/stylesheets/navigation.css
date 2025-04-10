@@ -1,0 +1,39 @@
+.navigationWrapper {
+  padding: .5em;
+  margin: .5em;
+}
+
+.navigationContainer {
+  width: 250px;
+  border-radius: 1em;
+  background: rgb(41, 40, 40);
+  color: white;
+  padding: .5em;
+  align-items: center;
+  text-align: center;
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  li {
+    margin: .75em;
+    padding: .5em;
+    font-size: large;
+    border: 1px solid white;
+    border-radius: 10px;
+  }
+
+  .link {
+    color: rgb(113, 154, 231);
+    text-decoration: none;
+  }
+
+  .link:hover {
+    color: rgb(155, 179, 225);
+    background-color: rgba(155, 179, 225, 0.31);
+    cursor: pointer;
+  }
+}
+

@@ -1,0 +1,41 @@
+.calendarCell {
+  display: flow;
+  margin: -90px 0px;
+}
+
+.calendarDate {
+  height: 35px; 
+  width: 100%;
+  text-align: center;
+}
+
+.previousCalendarDate{
+  height: 35px; 
+  width: 100%;
+  text-align: center;
+  color: grey;
+}
+
+.calendarTransactionRow {
+  height: 15px;
+  display: flex;
+
+  
+}
+
+.previousCalendarTransactionRow {
+  height: 15px;
+  display: flex;
+  color: grey
+}
+
+.totalCell {
+  display: flow;
+  margin: -45px 0px;
+}
+
+.totalLabel {
+  height: 20px; 
+  width: 100%;
+  text-align: center;
+}
