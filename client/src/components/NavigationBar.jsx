@@ -11,6 +11,10 @@ function NavigationBar() {
                 <NavigationLink to={"/mapping"}>Mapping</NavigationLink>
                 <NavigationLink to={"/licenses"}>Licenses</NavigationLink>
                 <NavigationLink to={"/showroomDemoLicenses"}>Showroom Demo Licenses</NavigationLink>
+                <NavigationLink to={"/pspLookup"}>PSP Lookup</NavigationLink>
+                <NavigationLink to={"/bulkMissingLicenses"}>Bulk Missing Licenses</NavigationLink>
+                <NavigationLink to={"/bulkWhiteLabelAssist"}>Bulk White Label Assist</NavigationLink>
+                <NavigationLink to={"/bulkRevokeLicenses"}>Bulk Revoke Licenses</NavigationLink>
             </ul>
     </div></div>);
 }

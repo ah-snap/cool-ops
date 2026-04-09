@@ -1,20 +1,40 @@
 export type Mapping = {
+    id: number;
+    d365CustomerID: string;
+    accountId: number;
     mac: string;
     dealerName: string;
+    dealerId: number;
     ovrc_location_id: string;
     ConnectStatus: string;
     CertificateCommonName: string;
     Name: string;
     locationId: string;
+    userId: number;
     dCode: string;
     companyName: string;
+    external_id: string;
     automationAccounts?: Array<{
         accountName: string;
         excludeAssist: boolean;
     }>;
+    originalVersion?: string;
+    excludeAssist?: boolean;
+    is_domestic: boolean;
+    error?: any;
+}
+
+export type SimpleAccountMapping = {
+    id: number;
+    accountId: number;
+    ovrc_location_id: string;
+    external_id: string;
+    certificateCommonName: string;
+    name: string;
 }
 
 export type LicenseData = {
+    id?: number;
     created_time: any;
     account_id: string;
     ConsumerId: any;
@@ -25,11 +45,18 @@ export type LicenseData = {
     transaction_id: string;
 }
 
+export type AddLicenseRow = {
+    transaction_id: any;
+    ExpirationDate: string;
+    sku: string;
+    created_time?: string;
+}
+
 export type LicenseRequestBody = {
     skus: string[];
-    createdTime: string;
+    createdTime?: string;
     transactionId: string;
-    accountId: string;
+    accountId: number;
     isRecurring: boolean;
     vendor: string;
     d365CustomerId: string;
@@ -38,4 +65,28 @@ export type LicenseRequestBody = {
     taxPercent: number;
     extraDays: number;
     productName: string;
+    transactionText?: string;
+    systemSubscriptionText?: string;
+    userId: number;
+}
+
+export type SnowLicenseAndTransactionRequestBody = {
+    transaction_id: string;
+    c4_user_id: number;
+    skus: string[];
+    subscription_id: string;
+    account_id: number;
+    location_id: string;
+    expiration_date: string;
+    external_customer_id: string;
+}
+
+export type ServerError = {
+    error: string;
+    details?: unknown;
+}
+
+export type RevokeLicensesItem = {
+    code?: string;
+    psp?: string;
 }

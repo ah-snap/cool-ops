@@ -1,0 +1,16 @@
+Resolve the warnings when starting docker
+Resolve Error in tsconfig
+Get code into commitable state
+Get env files into top level (to make set up easier)
+Commit past long amount of changes
+Pull out pages that aren't needed anymore
+Put usage instructions for existing pages
+
+Pull portforwards into server code
+Create Page to view/manage port forwards
+(dbForwardProd, dbForwardProdSnowdb, dbForwardProdMongoSocks)
+
+Same portforward management but for license process
+
+Long future nice adds
+Websocket events to be able to load pages with info from jira tickets

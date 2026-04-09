@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import "../../stylesheets/categories.css"
 import { Mapping } from "../../types.t";
 import MappingDisplay from "../MappingDisplay.tsx";
+import { markAccountAsConnect } from "../../actions/accountActions.ts";
+import { isServerError, parseApiResponse } from "../../actions/apiClient.ts";
+import { apiUrl } from "../../config.ts";
 
 function MappingPage() {
     const [commonNameOrMac, setCommonNameOrMac] = useState<string>("");
@@ -17,15 +20,11 @@ function MappingPage() {
     const attempt = async () => {
         setMapping(null);
         setEnableButton(false);
-        const response = await fetch(`http://localhost:3003/api/commonNames/${commonNameOrMac}`);
-        const data = await response.json();
+        const response = await fetch(apiUrl(`/commonNames/${commonNameOrMac}`));
+        const data = await parseApiResponse<Mapping>(response);
         setEnableButton(true);
-        if (data.error) {
+        if (isServerError(data)) {
             alert(data.error);
-            return;
-        }
-        if (data.length === 0) {
-            alert("No results found");
             return;
         }
         setMapping(data);
@@ -42,8 +41,20 @@ function MappingPage() {
             </label>
 
             <div style={{marginTop: 20}}>
-                {mapping && <MappingDisplay mapping={mapping} />}
-                {!enableButton && commonNameOrMac ? "Loading..." : null}
+                {<MappingDisplay mapping={mapping} />}
+                <div>
+                    <button onClick={async () => {
+                        if (mapping) {
+                            const result = await markAccountAsConnect(mapping.Name);
+                            if (result && 'error' in result) {
+                                alert(result.error);
+                            } else {
+                                setMapping(result as Mapping);
+                            }
+                        }
+                    }}>Mark as Connect</button>
+
+                </div>
             </div>
         </div>
     </div>;

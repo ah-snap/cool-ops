@@ -1,5 +1,7 @@
 import React from "react";
 import "../../stylesheets/categories.css"
+import { isServerError, parseApiResponse } from "../../actions/apiClient.ts";
+import { apiUrl } from "../../config.ts";
 
 type Change = {
     dCode: any;
@@ -40,7 +42,7 @@ async function updateLicenses(changes: Change[]) {
         freeConnectLicenses: change.freeConnectLicenses
     }));
 
-    const response = await fetch("http://localhost:3003/api/showroomDemoLicenses", {
+    const response = await fetch(apiUrl("/showroomDemoLicenses"), {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -48,7 +50,7 @@ async function updateLicenses(changes: Change[]) {
         body: JSON.stringify(payload)
     })
 
-    return await response.json();
+    return await parseApiResponse<Array<{ accountNum: string; freeConnectLicenses: number }>>(response);
 }
 
 
@@ -74,6 +76,11 @@ export default function ShowroomDemoLicensesPage() {
 
     async function execute() {
         const response = await updateLicenses(changes);
+
+        if (isServerError(response)) {
+            alert(response.error);
+            return;
+        }
 
         for (const row of response) {
             const change = changes.find(c => c.dCode.trim() === row.accountNum.trim());

@@ -26,4 +26,9 @@ yarn-error.log*
 
 /server/node_modules
 /client/node_modules
+/client/dist
+/client-vite/node_modules
+/client-vite/dist
+/server-bun/node_modules
+/server-bun/package-lock.json
 .vscode/

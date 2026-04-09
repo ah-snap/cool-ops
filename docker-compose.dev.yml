@@ -1,0 +1,52 @@
+services:
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: dev
+    env_file:
+      - ./server/.env
+    environment:
+      security16Host: ${SECURITY16_HOST:-host.docker.internal}
+      security16Port: ${SECURITY16_PORT:-1433}
+      PGHOST: ${PGHOST:-host.docker.internal}
+      PGPORT: ${PGPORT:-5432}
+      PORT: 3003
+      BUN_WATCH_USE_POLLING: "true"
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "500"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: bun run dev
+    volumes:
+      - ./server:/app
+      - api_node_modules:/app/node_modules
+    ports:
+      - "3003:3003"
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - ./client:/app
+      - client_node_modules:/app/node_modules
+      - client_npm_cache:/root/.npm
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3003/api}
+      VITE_D365_BASE_URL: ${VITE_D365_BASE_URL:-http://localhost:8061}
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  api_node_modules:
+  client_node_modules:
+  client_npm_cache:

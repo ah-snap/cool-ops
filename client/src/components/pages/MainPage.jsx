@@ -1,17 +1,24 @@
-import React, { useState } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import '../../App.css';
+import '../../stylesheets/categories.css';
 import NavigationBar from "../NavigationBar";
-import TodoPage from "./TodoPage";
 import {
   Route,
   Routes
 } from "react-router-dom";
-import MappingPage from "./MappingPage.tsx";
-import AdyenStitchingPage from "./AdyenStitchingPage";
-import DCodeValidationPage from "./DCodeValidationPage";
-import AdyenStitchingPage2 from "./AdyenStitchingPage2";
-import LicensesPage from "./LicensesPage.tsx";
-import ShowroomDemoLicensesPage from "./ShowroomDemoLicensesPage.tsx";
+
+const MappingPage = lazy(() => import("./MappingPage.tsx"));
+const DCodeValidationPage = lazy(() => import("./DCodeValidationPage"));
+const ShowroomDemoLicensesPage = lazy(() => import("./ShowroomDemoLicensesPage.tsx"));
+const MissingLicensePage = lazy(() => import("./MissingLicensePage.tsx"));
+const PSPLookup = lazy(() => import("./PSPLookup.tsx"));
+const BulkMissingLicensesPage = lazy(() => import("./BulkMissingLicensesPage.tsx"));
+const BulkWhiteLabelAssist = lazy(() => import("./BulkWhiteLabelAssist.tsx"));
+const BulkRevokeLicensePage = lazy(() => import("./BulkRevokeLicensePage.tsx"));
+
+function PageFallback() {
+  return <div style={{ padding: 16 }}>Loading section...</div>;
+}
 
 function MainPage() {
   const [date, setDate] = useState(new Date());
@@ -35,15 +42,18 @@ function MainPage() {
       <NavigationBar date={date} setDate={setDateAndClear} options={options} setOptions={setOptionsAndClear} />
       <div style={{overflowY: "scroll", height: "100vh", width: "100%"}}>
         <React.StrictMode>
-          <Routes>
-            <Route path="/mapping" element={<MappingPage />} />
-            <Route path="/licenses" element={<LicensesPage />} />
-            <Route path="/showroomDemoLicenses" element={<ShowroomDemoLicensesPage />} />
-            <Route path="/todo" element={<TodoPage />} />
-            <Route path="/adyen" element={<AdyenStitchingPage />} />
-            <Route path="/adyenv2" element={<AdyenStitchingPage2 />} />
-            <Route path="/customerMapping" element={<DCodeValidationPage />} />
-          </Routes>
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/mapping" element={<MappingPage />} />
+              <Route path="/licenses" element={<MissingLicensePage />} />
+              <Route path="/showroomDemoLicenses" element={<ShowroomDemoLicensesPage />} />
+              <Route path="/customerMapping" element={<DCodeValidationPage />} />
+              <Route path="/pspLookup" element={<PSPLookup />} />
+              <Route path="/bulkMissingLicenses" element={<BulkMissingLicensesPage />} />
+              <Route path="/bulkWhiteLabelAssist" element={<BulkWhiteLabelAssist />} />
+              <Route path="/bulkRevokeLicenses" element={<BulkRevokeLicensePage />} />
+            </Routes>
+          </Suspense>
         </React.StrictMode>
       </div>
     </div>
