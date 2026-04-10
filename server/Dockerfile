@@ -1,4 +1,12 @@
-FROM oven/bun:1.2-alpine
+FROM oven/bun:1.2 AS bun-base
+
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends ca-certificates curl unzip awscli \
+	&& curl -fsSL "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o /tmp/session-manager-plugin.deb \
+	&& apt-get install -y /tmp/session-manager-plugin.deb \
+	&& rm -rf /var/lib/apt/lists/* /tmp/session-manager-plugin.deb
+
+FROM bun-base
 
 WORKDIR /app
 
@@ -12,7 +20,7 @@ EXPOSE 3003
 
 CMD ["bun", "run", "start"]
 
-FROM oven/bun:1.2-alpine AS dev
+FROM bun-base AS dev
 
 WORKDIR /app
 

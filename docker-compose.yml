@@ -6,13 +6,17 @@ services:
     env_file:
       - ./server/.env
     environment:
-      security16Host: ${SECURITY16_HOST:-host.docker.internal}
+      security16Host: ${SECURITY16_HOST:-localhost}
       security16Port: ${SECURITY16_PORT:-1433}
       PGHOST: ${PGHOST:-host.docker.internal}
       PGPORT: ${PGPORT:-5433}
       PORT: 3003
+      AWS_CONFIG_FILE: /root/.aws/config
+      AWS_SHARED_CREDENTIALS_FILE: /root/.aws/credentials
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    volumes:
+      - ${USERPROFILE}/.aws:/root/.aws:rw
     ports:
       - "3003:3003"
     restart: unless-stopped

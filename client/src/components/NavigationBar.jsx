@@ -15,6 +15,7 @@ function NavigationBar() {
                 <NavigationLink to={"/bulkMissingLicenses"}>Bulk Missing Licenses</NavigationLink>
                 <NavigationLink to={"/bulkWhiteLabelAssist"}>Bulk White Label Assist</NavigationLink>
                 <NavigationLink to={"/bulkRevokeLicenses"}>Bulk Revoke Licenses</NavigationLink>
+                <NavigationLink to={"/managePortForwards"}>Manage Port Forwards</NavigationLink>
             </ul>
     </div></div>);
 }

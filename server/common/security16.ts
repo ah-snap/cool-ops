@@ -7,7 +7,7 @@ return {
     database: process.env.security16Database,
     driver: 'tedious',
     port: Number(process.env.security16Port || 1433),
-    server: process.env.security16Host || 'host.docker.internal',
+    server: process.env.security16Host || 'localhost',
     pool: {
         max: 10,
         min: 0,

@@ -1,4 +1,5 @@
 const normalize = (baseUrl: string): string => baseUrl.replace(/\/$/, "");
+const stripApiSuffix = (url: string): string => url.replace(/\/api$/, "");
 
 const env = import.meta.env as Record<string, string | undefined>;
 
@@ -7,6 +8,9 @@ export const API_BASE_URL = normalize(
 );
 export const D365_BASE_URL = normalize(
 	env.VITE_D365_BASE_URL || env.REACT_APP_D365_BASE_URL || "http://localhost:8061"
+);
+export const SOCKET_BASE_URL = normalize(
+	env.VITE_SOCKET_BASE_URL || env.REACT_APP_SOCKET_BASE_URL || stripApiSuffix(API_BASE_URL)
 );
 
 export const apiUrl = (path: string): string => `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;

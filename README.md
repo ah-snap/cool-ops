@@ -21,6 +21,32 @@ aws ssm start-session --region us-east-2 --target i-03c11f3bcfd51b0d9 \
     --profile prod_access
 ```
 
+Note for the new Manage Port Forwards page: the command is launched by the API process.
+If API runs in Docker, the container must have both `aws` CLI and Session Manager Plugin available, plus access to host AWS credentials
+(for example by mounting `~/.aws` into the container). If API runs directly on the host, it uses the host setup as-is.
+
+For Docker usage, one practical option is to mount your AWS credentials/config into the API service, for example on Windows:
+
+```yaml
+services:
+    api:
+        volumes:
+            - ${USERPROFILE}/.aws:/root/.aws:rw
+```
+
+Then rebuild the API container after Dockerfile changes:
+
+```bash
+docker compose -f docker-compose.dev.yml build api
+docker compose -f docker-compose.dev.yml up -d api
+```
+
+You can verify the profile is visible inside the API container with:
+
+```bash
+docker compose -f docker-compose.dev.yml exec api aws configure list-profiles
+```
+
 Mongo SOCKS example (`ovrc_prod_ssm` profile + `prodovrckey.pem`):
 
 ```bash

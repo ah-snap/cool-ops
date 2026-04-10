@@ -15,6 +15,7 @@ const PSPLookup = lazy(() => import("./PSPLookup.tsx"));
 const BulkMissingLicensesPage = lazy(() => import("./BulkMissingLicensesPage.tsx"));
 const BulkWhiteLabelAssist = lazy(() => import("./BulkWhiteLabelAssist.tsx"));
 const BulkRevokeLicensePage = lazy(() => import("./BulkRevokeLicensePage.tsx"));
+const ManagePortForwardsPage = lazy(() => import("./ManagePortForwardsPage.tsx"));
 
 function PageFallback() {
   return <div style={{ padding: 16 }}>Loading section...</div>;
@@ -52,6 +53,7 @@ function MainPage() {
               <Route path="/bulkMissingLicenses" element={<BulkMissingLicensesPage />} />
               <Route path="/bulkWhiteLabelAssist" element={<BulkWhiteLabelAssist />} />
               <Route path="/bulkRevokeLicenses" element={<BulkRevokeLicensePage />} />
+              <Route path="/managePortForwards" element={<ManagePortForwardsPage />} />
             </Routes>
           </Suspense>
         </React.StrictMode>
