@@ -15,7 +15,7 @@ function getMongoUri(): string {
     try {
         const parsed = new URL(uri);
         if (parsed.searchParams.get("proxyHost") === "localhost") {
-            parsed.searchParams.set("proxyHost", "host.docker.internal");
+            parsed.searchParams.set("proxyHost", "127.0.0.1");
             return parsed.toString();
         }
     } catch {

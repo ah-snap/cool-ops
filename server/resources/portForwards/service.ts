@@ -1,5 +1,8 @@
 import { spawn } from "child_process";
 import type { ChildProcessWithoutNullStreams } from "child_process";
+import { copyFileSync, chmodSync, existsSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import type { PortForwardDefinition } from "./definitions.ts";
 import { portForwardDefinitions } from "./definitions.ts";
 
@@ -42,6 +45,38 @@ function formatProcessError(error: Error): string {
   }
 
   return err.message;
+}
+
+function prepareArgsForExecution(command: string, args: string[]): string[] {
+  if (command !== "ssh") {
+    return args;
+  }
+
+  const prepared = [...args];
+  const keyIndexI = prepared.findIndex((arg) => arg === "-i");
+
+  if (keyIndexI < 0 || keyIndexI + 1 >= prepared.length) {
+    return prepared;
+  }
+
+  const keyPath = prepared[keyIndexI + 1];
+
+  if (!keyPath || !existsSync(keyPath)) {
+    return prepared;
+  }
+
+  try {
+    const baseName = keyPath.split("/").pop() || "temp-key.pem";
+    const tempKeyPath = join(tmpdir(), baseName);
+
+    copyFileSync(keyPath, tempKeyPath);
+    chmodSync(tempKeyPath, 0o600);
+
+    prepared[keyIndexI + 1] = tempKeyPath;
+    return prepared;
+  } catch {
+    return prepared;
+  }
 }
 
 class PortForwardManager {
@@ -103,7 +138,9 @@ class PortForwardManager {
 
     this.appendLog(id, "system", `Starting command: ${state.definition.command} ${state.definition.args.join(" ")}`);
 
-    const child = spawn(state.definition.command, state.definition.args, {
+    const spawnArgs = prepareArgsForExecution(state.definition.command, state.definition.args);
+
+    const child = spawn(state.definition.command, spawnArgs, {
       env: process.env,
       shell: false,
       windowsHide: true,

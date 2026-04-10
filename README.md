@@ -32,7 +32,11 @@ services:
     api:
         volumes:
             - ${USERPROFILE}/.aws:/root/.aws:rw
+            - ./prodovrckey.pem:/run/keys/prodovrckey.pem:ro
 ```
+
+If you use the Mongo SOCKS port-forward from the Manage Port Forwards page, the API runtime also needs the SSH private key
+used by that tunnel command (default: `/run/keys/prodovrckey.pem` in container).
 
 Then rebuild the API container after Dockerfile changes:
 
@@ -45,6 +49,16 @@ You can verify the profile is visible inside the API container with:
 
 ```bash
 docker compose -f docker-compose.dev.yml exec api aws configure list-profiles
+docker compose -f docker-compose.dev.yml exec api ls -l /run/keys/prodovrckey.pem
+```
+
+If you run commands from Git Bash on Windows, MSYS can rewrite container paths like `/run/...` into
+`C:/Program Files/Git/run/...`. Use one of these forms instead:
+
+```bash
+MSYS_NO_PATHCONV=1 docker compose -f docker-compose.dev.yml exec api ls -l /run/keys/prodovrckey.pem
+# or
+docker compose -f docker-compose.dev.yml exec api ls -l //run/keys/prodovrckey.pem
 ```
 
 Mongo SOCKS example (`ovrc_prod_ssm` profile + `prodovrckey.pem`):
