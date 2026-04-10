@@ -1,7 +1,7 @@
 FROM oven/bun:1.2 AS bun-base
 
 RUN apt-get update \
-	&& apt-get install -y --no-install-recommends ca-certificates curl gnupg unzip awscli openssh-client \
+	&& apt-get install -y --no-install-recommends ca-certificates curl gnupg jq unzip awscli openssh-client \
 	&& curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | apt-key add - \
 	&& echo "deb https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list \
 	&& apt-get update \

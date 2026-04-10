@@ -7,7 +7,8 @@ export type PortForwardSummary = {
   description: string;
   command: string;
   args: string[];
-  status: "idle" | "starting" | "running" | "stopped" | "error";
+  runMode: "persistent" | "oneshot";
+  status: "idle" | "starting" | "running" | "stopped" | "success" | "error";
   pid: number | null;
   lastStartedAt: string | null;
   lastExitedAt: string | null;
@@ -21,6 +22,14 @@ export type PortForwardLogEntry = {
   timestamp: string;
   stream: "stdout" | "stderr" | "system";
   message: string;
+};
+
+export type AwsCredentialsFreshness = {
+  path: string;
+  exists: boolean;
+  lastUpdatedAt: string | null;
+  maxAgeHours: number;
+  isFresh: boolean;
 };
 
 function ensureSuccess<T>(value: T | { error: string }): T {
@@ -40,6 +49,12 @@ export async function fetchPortForwards(): Promise<PortForwardSummary[]> {
 export async function fetchPortForwardLogs(id: string, limit = 500): Promise<PortForwardLogEntry[]> {
   const response = await fetch(apiUrl(`/portForwards/${id}/logs?limit=${limit}`));
   const data = await parseApiResponse<{ data: PortForwardLogEntry[] }>(response);
+  return ensureSuccess(data).data;
+}
+
+export async function fetchAwsCredentialsFreshness(maxAgeHours = 8): Promise<AwsCredentialsFreshness> {
+  const response = await fetch(apiUrl(`/portForwards/aws-credentials/freshness?maxAgeHours=${maxAgeHours}`));
+  const data = await parseApiResponse<{ data: AwsCredentialsFreshness }>(response);
   return ensureSuccess(data).data;
 }
 

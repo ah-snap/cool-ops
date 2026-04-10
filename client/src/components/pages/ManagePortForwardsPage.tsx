@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import "../../stylesheets/categories.css";
 import {
+  fetchAwsCredentialsFreshness,
   fetchPortForwardLogs,
   fetchPortForwards,
   restartPortForward,
@@ -20,6 +21,36 @@ type PortForwardEvent = {
 };
 
 const MAX_VISIBLE_LOGS = 500;
+const AWS_CREDENTIALS_FORWARD_ID = "aws-credentials-refresh";
+const CREDENTIALS_MAX_AGE_HOURS = 8;
+const POLL_INTERVAL_MS = 1500;
+const MAX_WAIT_MS = 15 * 60 * 1000;
+
+function extractAwsSsoPrompt(logs: PortForwardLogEntry[]): { url: string; code: string } | null {
+  let url = "";
+  let code = "";
+
+  for (let index = logs.length - 1; index >= 0; index -= 1) {
+    const message = logs[index].message.trim();
+
+    if (!url && /^https:\/\//i.test(message)) {
+      url = message;
+    }
+
+    if (!code) {
+      const match = message.match(/\b[A-Z0-9]{4}-[A-Z0-9]{4}\b/);
+      if (match) {
+        code = match[0];
+      }
+    }
+
+    if (url && code) {
+      return { url, code };
+    }
+  }
+
+  return null;
+}
 
 function statusColor(status: PortForwardSummary["status"]): string {
   if (status === "running") {
@@ -34,6 +65,10 @@ function statusColor(status: PortForwardSummary["status"]): string {
     return "#b91c1c";
   }
 
+  if (status === "success") {
+    return "#166534";
+  }
+
   return "#6b7280";
 }
 
@@ -45,6 +80,7 @@ export default function ManagePortForwardsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<"start" | "restart" | "stop" | null>(null);
+  const [startupBusy, setStartupBusy] = useState(false);
 
   const selectedForward = useMemo(
     () => forwards.find((forward) => forward.id === selectedId) ?? null,
@@ -178,11 +214,123 @@ export default function ManagePortForwardsPage() {
   };
 
   const visibleLogs = selectedId ? logsById[selectedId] || [] : [];
+  const awsSsoPrompt = useMemo(() => {
+    if (!selectedForward || selectedForward.id !== "aws-credentials-refresh") {
+      return null;
+    }
+
+    return extractAwsSsoPrompt(visibleLogs);
+  }, [selectedForward, visibleLogs]);
+
+  const handleAwsSsoAssist = async () => {
+    if (!awsSsoPrompt) {
+      return;
+    }
+
+    setError(null);
+
+    if (!navigator.clipboard?.writeText) {
+      setError("Clipboard API is unavailable in this browser context.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(awsSsoPrompt.code);
+      const opened = window.open(awsSsoPrompt.url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        setError("Pop-up was blocked. Please allow pop-ups for this site.");
+      }
+    } catch (err) {
+      setError((err as Error).message || "Failed to copy code and open SSO page.");
+    }
+  };
+
+  const waitForOneShotCompletion = async (id: string): Promise<PortForwardSummary> => {
+    const startedAt = Date.now();
+
+    while (Date.now() - startedAt < MAX_WAIT_MS) {
+      const latestForwards = await fetchPortForwards();
+      setForwards(latestForwards);
+
+      const summary = latestForwards.find((forward) => forward.id === id);
+      if (!summary) {
+        throw new Error(`Missing command state for ${id}.`);
+      }
+
+      if (summary.status === "success") {
+        return summary;
+      }
+
+      if (summary.status === "error") {
+        throw new Error(`${summary.name} failed. Check logs for details.`);
+      }
+
+      await new Promise<void>((resolve) => {
+        window.setTimeout(() => resolve(), POLL_INTERVAL_MS);
+      });
+    }
+
+    throw new Error("Timed out waiting for AWS credentials update to finish.");
+  };
+
+  const handleStartupSequence = async () => {
+    setStartupBusy(true);
+    setError(null);
+
+    try {
+      const freshness = await fetchAwsCredentialsFreshness(CREDENTIALS_MAX_AGE_HOURS);
+      let currentForwards = await fetchPortForwards();
+      setForwards(currentForwards);
+
+      const credentialsJob = currentForwards.find((forward) => forward.id === AWS_CREDENTIALS_FORWARD_ID);
+      if (!credentialsJob) {
+        throw new Error("Missing Update AWS Credentials command.");
+      }
+
+      if (!freshness.isFresh) {
+        if (credentialsJob.status !== "running" && credentialsJob.status !== "starting") {
+          await startPortForward(AWS_CREDENTIALS_FORWARD_ID);
+        }
+
+        await waitForOneShotCompletion(AWS_CREDENTIALS_FORWARD_ID);
+        currentForwards = await fetchPortForwards();
+        setForwards(currentForwards);
+      }
+
+      for (const forward of currentForwards) {
+        if (forward.id === AWS_CREDENTIALS_FORWARD_ID) {
+          continue;
+        }
+
+        if (forward.runMode !== "persistent") {
+          continue;
+        }
+
+        if (forward.status === "running" || forward.status === "starting") {
+          continue;
+        }
+
+        await startPortForward(forward.id);
+      }
+
+      const refreshed = await fetchPortForwards();
+      setForwards(refreshed);
+    } catch (err) {
+      setError((err as Error).message || "Failed startup sequence.");
+    } finally {
+      setStartupBusy(false);
+    }
+  };
 
   return (
     <div className="categoryWrapper">
-      <div className="categoryContainer" style={{ maxWidth: 1200 }}>
-        <h1>Manage Port Forwards</h1>
+      <div className="categoryContainer" style={{width: "80%", height: "100%" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <h1 style={{ marginBottom: 0 }}>Manage Port Forwards</h1>
+          <button disabled={loading || startupBusy || busyAction !== null} onClick={handleStartupSequence}>
+            {startupBusy ? "Running Startup Sequence..." : "Run Startup Sequence"}
+          </button>
+        </div>
         <p>
           Start and monitor host-side tunnel processes required by the app.
           This currently includes Security_16 SQL via AWS SSM.
@@ -236,15 +384,33 @@ export default function ManagePortForwardsPage() {
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button disabled={busyAction !== null} onClick={() => performAction("start")}>Start</button>
-                      <button disabled={busyAction !== null} onClick={() => performAction("restart")}>Restart</button>
-                      <button disabled={busyAction !== null} onClick={() => performAction("stop")}>Stop</button>
+                      <button disabled={busyAction !== null} onClick={() => performAction("start")}>
+                        {selectedForward.runMode === "oneshot" ? "Run" : "Start"}
+                      </button>
+                      {selectedForward.runMode === "persistent" && (
+                        <button disabled={busyAction !== null} onClick={() => performAction("restart")}>Restart</button>
+                      )}
+                      {selectedForward.runMode === "persistent" && (
+                        <button disabled={busyAction !== null} onClick={() => performAction("stop")}>Stop</button>
+                      )}
                     </div>
                   </div>
 
                   <div style={{ fontSize: 12, marginBottom: 8, color: "#EEE" }}>
                     <strong>Command:</strong> {selectedForward.command} {selectedForward.args.join(" ")}
                   </div>
+
+                  {awsSsoPrompt && (
+                    <div style={{ marginBottom: 12, padding: 10, border: "1px solid #c7d2fe", borderRadius: 8, background: "#101a3c" }}>
+                      <div style={{ fontSize: 12, marginBottom: 6 }}>
+                        <strong>SSO Device Code:</strong> {awsSsoPrompt.code}
+                      </div>
+                      <div style={{ fontSize: 12, marginBottom: 8, wordBreak: "break-all" }}>
+                        <strong>SSO URL:</strong> {awsSsoPrompt.url}
+                      </div>
+                      <button onClick={handleAwsSsoAssist}>Copy Code + Open Login Page</button>
+                    </div>
+                  )}
 
                   <div
                     style={{

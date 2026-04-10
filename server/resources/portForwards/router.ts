@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  getAwsCredentialsFreshness,
   getPortForwardLogs,
   listPortForwards,
   restartPortForward,
@@ -10,6 +11,7 @@ import {
 export const portForwardsRouter = Router();
 
 portForwardsRouter.get("/", listPortForwards);
+portForwardsRouter.get("/aws-credentials/freshness", getAwsCredentialsFreshness);
 portForwardsRouter.get("/:id/logs", getPortForwardLogs);
 portForwardsRouter.post("/:id/start", startPortForward);
 portForwardsRouter.post("/:id/restart", restartPortForward);

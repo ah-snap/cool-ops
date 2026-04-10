@@ -1,12 +1,12 @@
 import { spawn } from "child_process";
 import type { ChildProcessWithoutNullStreams } from "child_process";
-import { copyFileSync, chmodSync, existsSync } from "fs";
+import { copyFileSync, chmodSync, existsSync, statSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import type { PortForwardDefinition } from "./definitions.ts";
 import { portForwardDefinitions } from "./definitions.ts";
 
-export type PortForwardStatus = "idle" | "starting" | "running" | "stopped" | "error";
+export type PortForwardStatus = "idle" | "starting" | "running" | "stopped" | "success" | "error";
 
 type PortForwardLogEntry = {
   id: number;
@@ -122,8 +122,37 @@ class PortForwardManager {
     return state.logs.slice(-safeLimit);
   }
 
+  getAwsCredentialsFreshness(maxAgeHours = 8) {
+    const credentialsFilePath = process.env.AWS_SHARED_CREDENTIALS_FILE || `${process.env.HOME || "/root"}/.aws/credentials`;
+    const safeMaxAgeHours = Number.isFinite(maxAgeHours) ? Math.max(1, Math.min(168, Math.floor(maxAgeHours))) : 8;
+
+    if (!existsSync(credentialsFilePath)) {
+      return {
+        path: credentialsFilePath,
+        exists: false,
+        lastUpdatedAt: null,
+        maxAgeHours: safeMaxAgeHours,
+        isFresh: false
+      };
+    }
+
+    const fileStats = statSync(credentialsFilePath);
+    const lastUpdatedAt = fileStats.mtime.toISOString();
+    const ageMs = Date.now() - fileStats.mtime.getTime();
+    const isFresh = ageMs <= safeMaxAgeHours * 60 * 60 * 1000;
+
+    return {
+      path: credentialsFilePath,
+      exists: true,
+      lastUpdatedAt,
+      maxAgeHours: safeMaxAgeHours,
+      isFresh
+    };
+  }
+
   start(id: string) {
     const state = this.getState(id);
+    const runMode = state.definition.runMode || "persistent";
 
     if (state.status === "running" || state.status === "starting") {
       return this.toSummary(state);
@@ -143,6 +172,7 @@ class PortForwardManager {
     const child = spawn(state.definition.command, spawnArgs, {
       env: process.env,
       shell: false,
+      detached: process.platform !== "win32",
       windowsHide: true,
       stdio: ["ignore", "pipe", "pipe"]
     });
@@ -180,7 +210,7 @@ class PortForwardManager {
       state.pid = null;
       state.lastExitedAt = new Date().toISOString();
       state.exitCode = code;
-      state.status = code === 0 ? "stopped" : "error";
+      state.status = code === 0 ? (runMode === "oneshot" ? "success" : "stopped") : "error";
       state.updatedAt = state.lastExitedAt;
 
       const codeLabel = code === null ? "unknown" : String(code);
@@ -198,10 +228,11 @@ class PortForwardManager {
 
   async stop(id: string) {
     const state = this.getState(id);
+    const runMode = state.definition.runMode || "persistent";
     const processRef = this.processes.get(id);
 
     if (!processRef) {
-      state.status = "stopped";
+      state.status = runMode === "oneshot" ? state.status : "stopped";
       state.updatedAt = new Date().toISOString();
       this.emitStatus(id);
       return this.toSummary(state);
@@ -221,7 +252,20 @@ class PortForwardManager {
 
       processRef.once("close", () => finish());
 
-      const signaled = processRef.kill();
+      const signalProcess = (signal?: NodeJS.Signals): boolean => {
+        if (process.platform !== "win32" && processRef.pid) {
+          try {
+            process.kill(-processRef.pid, signal);
+            return true;
+          } catch {
+            return processRef.kill(signal);
+          }
+        }
+
+        return processRef.kill(signal);
+      };
+
+      const signaled = signalProcess();
       if (!signaled) {
         finish();
       }
@@ -231,7 +275,7 @@ class PortForwardManager {
           return;
         }
 
-        const forceKilled = processRef.kill("SIGKILL");
+        const forceKilled = signalProcess("SIGKILL");
         if (forceKilled) {
           this.appendLog(id, "system", "Forced termination issued (SIGKILL)." );
         }
@@ -287,6 +331,7 @@ class PortForwardManager {
       description: state.definition.description,
       command: state.definition.command,
       args: state.definition.args,
+      runMode: state.definition.runMode || "persistent",
       status: state.status,
       pid: state.pid,
       lastStartedAt: state.lastStartedAt,

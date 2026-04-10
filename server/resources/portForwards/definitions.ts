@@ -4,6 +4,7 @@ export type PortForwardDefinition = {
   description: string;
   command: string;
   args: string[];
+  runMode?: "persistent" | "oneshot";
 };
 
 const mongoSshKeyPath = process.env.PORT_FORWARD_MONGO_SSH_KEY_PATH || `${process.env.HOME || "/root"}/.ssh/prodovrckey.pem`;
@@ -16,6 +17,15 @@ const k8sLocalPort = process.env.PORT_FORWARD_K8S_LOCAL_PORT || "8061";
 const k8sPodPort = process.env.PORT_FORWARD_K8S_POD_PORT || "80";
 
 export const portForwardDefinitions: PortForwardDefinition[] = [
+  {
+    id: "aws-credentials-refresh",
+    name: "Update AWS Credentials",
+    description:
+      "Runs AWS SSO credential refresh and updates shared ~/.aws/credentials profiles (one-shot).",
+    command: "bash",
+    args: ["/app/resources/portForwards/scripts/updateAwsCreds.sh"],
+    runMode: "oneshot"
+  },
   {
     id: "security16-sql",
     name: "Security_16 SQL (1433)",

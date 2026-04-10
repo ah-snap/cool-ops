@@ -14,6 +14,12 @@ export async function listPortForwards(_req: Request, res: Response) {
   res.json({ data: portForwardManager.listSummaries() });
 }
 
+export async function getAwsCredentialsFreshness(req: Request, res: Response) {
+  const parsed = Number(req.query.maxAgeHours);
+  const maxAgeHours = Number.isFinite(parsed) ? parsed : 8;
+  res.json({ data: portForwardManager.getAwsCredentialsFreshness(maxAgeHours) });
+}
+
 export async function getPortForwardLogs(req: Request, res: Response) {
   try {
     const logs = portForwardManager.getLogs(req.params.id, getLimit(req.query.limit));
