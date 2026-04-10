@@ -8,6 +8,12 @@ export type PortForwardDefinition = {
 
 const mongoSshKeyPath = process.env.PORT_FORWARD_MONGO_SSH_KEY_PATH || `${process.env.HOME || "/root"}/.ssh/prodovrckey.pem`;
 const snowdbSshKeyPath = process.env.PORT_FORWARD_SNOWDB_SSH_KEY_PATH || "/run/keys/snowdb.pem";
+const k8sContext = process.env.PORT_FORWARD_K8S_CONTEXT || "";
+const k8sNamespace = process.env.PORT_FORWARD_K8S_NAMESPACE || "boot-services";
+const k8sService = process.env.PORT_FORWARD_K8S_SERVICE || process.env.PORT_FORWARD_K8S_POD || "cs-license-process-boot";
+const k8sAddress = process.env.PORT_FORWARD_K8S_ADDRESS || "127.0.0.1";
+const k8sLocalPort = process.env.PORT_FORWARD_K8S_LOCAL_PORT || "8061";
+const k8sPodPort = process.env.PORT_FORWARD_K8S_POD_PORT || "80";
 
 export const portForwardDefinitions: PortForwardDefinition[] = [
   {
@@ -73,6 +79,24 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
       "-L",
       "127.0.0.1:5433:prod-snow.cluster-cvzzsmsbqjep.us-east-1.rds.amazonaws.com:5432",
       "ec2-user@ec2-54-237-232-127.compute-1.amazonaws.com"
+    ]
+  },
+  {
+    id: "k8s-license-service-8061",
+    name: "Kubernetes License Service (8061)",
+    description:
+      "kubectl port-forward to cs-license-process-boot service (port 80 -> localhost:8061) in boot-services namespace on prod cluster.",
+    command: "kubectl",
+    args: [
+      "port-forward",
+      "-n",
+      k8sNamespace,
+      `svc/${k8sService}`,
+      "--address",
+      k8sAddress,
+      `${k8sLocalPort}:${k8sPodPort}`,
+      `--kubeconfig=/root/.kube/config`,
+      ...(k8sContext ? [`--context=${k8sContext}`] : [])
     ]
   }
 ];

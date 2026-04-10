@@ -15,12 +15,19 @@ services:
       AWS_SHARED_CREDENTIALS_FILE: /root/.aws/credentials
       PORT_FORWARD_MONGO_SSH_KEY_PATH: /run/keys/prodovrckey.pem
       PORT_FORWARD_SNOWDB_SSH_KEY_PATH: /run/keys/snowdb.pem
+      PORT_FORWARD_K8S_CONTEXT: ${PORT_FORWARD_K8S_CONTEXT:-}
+      PORT_FORWARD_K8S_NAMESPACE: boot-services
+      PORT_FORWARD_K8S_SERVICE: cs-license-process-boot
+      PORT_FORWARD_K8S_POD: cs-license-process-boot
+      PORT_FORWARD_K8S_LOCAL_PORT: "8061"
+      PORT_FORWARD_K8S_POD_PORT: "80"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ${USERPROFILE}/.aws:/root/.aws:rw
       - ./prodovrckey.pem:/run/keys/prodovrckey.pem:ro
       - ./snowdb.pem:/run/keys/snowdb.pem:ro
+      - ${USERPROFILE}/.kube:/root/.kube:ro
     ports:
       - "3003:3003"
     restart: unless-stopped

@@ -92,7 +92,7 @@ export default function ManagePortForwardsPage() {
       .catch((err) => {
         setError((err as Error).message || "Failed to load logs.");
       });
-  }, [selectedId, logsById]);
+  }, [selectedId]);
 
   useEffect(() => {
     const socket = io(SOCKET_BASE_URL, {
