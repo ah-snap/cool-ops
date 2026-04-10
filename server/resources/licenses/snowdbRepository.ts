@@ -1,4 +1,5 @@
 import { Client } from 'pg';
+import { getPgHost, getPgPort } from '../../common/snowdbPostgres.ts';
 
 interface SnowInsertInput {
     transaction_id: string;
@@ -28,10 +29,10 @@ export interface SnowLicenseRow {
 export async function insertLicenseAndTransaction({ transaction_id, c4_user_id, skus, subscription_id, account_id, location_id, expiration_date, external_customer_id }: SnowInsertInput) {
         const client = new Client({
             user: process.env.PGUSER,
-            host: process.env.PGHOST,
+            host: getPgHost(),
             database: process.env.PGDATABASE,
             password: process.env.PGPASSWORD,
-            port: process.env.PGPORT,
+            port: getPgPort(),
         });
         try {
             await client.connect();
@@ -99,10 +100,10 @@ export async function insertLicenseAndTransaction({ transaction_id, c4_user_id, 
 export async function getLicensesByAccountId({ accountId }: { accountId: string | number; }): Promise<SnowLicenseRow[]> {
     const client = new Client({
         user: process.env.PGUSER,
-        host: process.env.PGHOST,
+        host: getPgHost(),
         database: process.env.PGDATABASE,
         password: process.env.PGPASSWORD,
-        port: process.env.PGPORT,
+        port: getPgPort(),
     });
     try {
         await client.connect();

@@ -7,6 +7,7 @@ export type PortForwardDefinition = {
 };
 
 const mongoSshKeyPath = process.env.PORT_FORWARD_MONGO_SSH_KEY_PATH || `${process.env.HOME || "/root"}/.ssh/prodovrckey.pem`;
+const snowdbSshKeyPath = process.env.PORT_FORWARD_SNOWDB_SSH_KEY_PATH || "/run/keys/snowdb.pem";
 
 export const portForwardDefinitions: PortForwardDefinition[] = [
   {
@@ -51,6 +52,27 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
       "ubuntu@localhost",
       "-D",
       "127.0.0.1:9925"
+    ]
+  },
+  {
+    id: "snowdb-postgres-5433",
+    name: "SnowDB Postgres (5433)",
+    description:
+      "SSH local port-forward to SnowDB Postgres (prod-snow.cluster-cvzzsmsbqjep.us-east-1.rds.amazonaws.com:5432) on localhost:5433.",
+    command: "ssh",
+    args: [
+      "-i",
+      snowdbSshKeyPath,
+      "-N",
+      "-o",
+      "StrictHostKeyChecking=no",
+      "-o",
+      "UserKnownHostsFile=/dev/null",
+      "-o",
+      "AddressFamily=inet",
+      "-L",
+      "127.0.0.1:5433:prod-snow.cluster-cvzzsmsbqjep.us-east-1.rds.amazonaws.com:5432",
+      "ec2-user@ec2-54-237-232-127.compute-1.amazonaws.com"
     ]
   }
 ];

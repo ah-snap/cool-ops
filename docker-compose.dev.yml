@@ -15,6 +15,7 @@ services:
       AWS_CONFIG_FILE: /root/.aws/config
       AWS_SHARED_CREDENTIALS_FILE: /root/.aws/credentials
       PORT_FORWARD_MONGO_SSH_KEY_PATH: /run/keys/prodovrckey.pem
+      PORT_FORWARD_SNOWDB_SSH_KEY_PATH: /run/keys/snowdb.pem
       BUN_WATCH_USE_POLLING: "true"
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
@@ -27,6 +28,7 @@ services:
       - api_node_modules:/app/node_modules
       - ${USERPROFILE}/.aws:/root/.aws:rw
       - ./prodovrckey.pem:/run/keys/prodovrckey.pem:ro
+      - ./snowdb.pem:/run/keys/snowdb.pem:ro
     ports:
       - "3003:3003"
     restart: unless-stopped

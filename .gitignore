@@ -24,6 +24,7 @@ yarn-error.log*
 
 .env
 /prodovrckey.pem
+/snowdb.pem
 
 /server/node_modules
 /client/node_modules
