@@ -10,7 +10,7 @@ The app still depends on external data sources that must be reachable from your 
 
 - Security_16 SQL Server on local port `1433`
 - Mongo SOCKS proxy on local port `9925`
-- SnowDB/Postgres on local port `5432` (if used in your flow)
+- SnowDB/Postgres on local port `5433` (if used in your flow)
 
 Security_16 example (`prod_access` profile):
 

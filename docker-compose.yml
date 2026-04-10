@@ -9,7 +9,7 @@ services:
       security16Host: ${SECURITY16_HOST:-host.docker.internal}
       security16Port: ${SECURITY16_PORT:-1433}
       PGHOST: ${PGHOST:-host.docker.internal}
-      PGPORT: ${PGPORT:-5432}
+      PGPORT: ${PGPORT:-5433}
       PORT: 3003
     extra_hosts:
       - "host.docker.internal:host-gateway"

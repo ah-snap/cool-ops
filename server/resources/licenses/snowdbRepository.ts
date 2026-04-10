@@ -57,12 +57,27 @@ export async function insertLicenseAndTransaction({ transaction_id, c4_user_id, 
                 systemSubscriptionTransactionId = transactionResult.rows[0].system_subscription_transaction_id;
             }
 
-            await client.query(
-                `INSERT INTO snow.subscription.system_subscription 
-                (subscription_id, account_id, location_id, expiration_date, deleted, canceled, status, system_subscription_transaction_id, external_customer_id)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                [subscription_id, account_id, location_id, expiration_date, false, false, 'ACTIVE', systemSubscriptionTransactionId, external_customer_id]
+            // check for an existing system_subscription record with the same transaction_id_from_source and subscription_id to avoid duplicate subscriptions
+
+            const subscriptionIdResult = await client.query(
+                `SELECT ss.subscription_id FROM snow.subscription.system_subscription ss
+                INNER JOIN snow.subscription.system_subscription_transaction sst
+                    ON ss.system_subscription_transaction_id = sst.system_subscription_transaction_id
+                WHERE sst.transaction_id_from_source = $1
+                AND ss.subscription_id = $2`,
+                [transaction_id, subscription_id]
             );
+
+            if (subscriptionIdResult.rows.length > 0) {
+                console.log(`Subscription with id ${subscription_id} already exists for transaction ${transaction_id}`);
+            } else {
+                await client.query(
+                    `INSERT INTO snow.subscription.system_subscription 
+                    (subscription_id, account_id, location_id, expiration_date, deleted, canceled, status, system_subscription_transaction_id, external_customer_id)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                    [subscription_id, account_id, location_id, expiration_date, false, false, 'ACTIVE', systemSubscriptionTransactionId, external_customer_id]
+                );
+            }
     
             return await client.query(
                 `SELECT

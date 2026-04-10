@@ -9,8 +9,8 @@ services:
     environment:
       security16Host: ${SECURITY16_HOST:-host.docker.internal}
       security16Port: ${SECURITY16_PORT:-1433}
-      PGHOST: ${PGHOST:-host.docker.internal}
-      PGPORT: ${PGPORT:-5432}
+      PGHOST: host.docker.internal
+      PGPORT: ${PGPORT:-5433}
       PORT: 3003
       BUN_WATCH_USE_POLLING: "true"
       WATCHPACK_POLLING: "true"
