@@ -1,0 +1,11 @@
+.showroomDemoLicensesInput {
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 220px;
+  height: 20px;
+}
+
+.showroomDemoLicensesSuccess {
+  color: green;
+  margin-left: 10px;
+}

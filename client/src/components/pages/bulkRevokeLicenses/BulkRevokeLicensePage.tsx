@@ -1,0 +1,65 @@
+import { useEffect, useState } from "react";
+import { LicenseData } from "../../../types.t";
+import LicensesDisplay from "../../LicensesDisplay.tsx";
+import * as licenseActions from "../../../actions/licenseActions.ts";
+import PageShell from "../../common/layout/PageShell.tsx";
+import "./bulkRevokeLicenses.css";
+
+export default function BulkRevokeLicensePage() {
+  const [text, setText] = useState<string>("");
+  const [licenseData, setLicenseData] = useState<LicenseData[] | null>(null);
+
+  useEffect(() => {
+    const lines = text.split("\n").filter((line: string) => line.trim() !== "");
+
+    let id = 1;
+    const builtRows: LicenseData[] = lines.map((line: string) => {
+      const fields = line.split("\t");
+      const psp = fields[0];
+
+      return {
+        id: id++,
+        transaction_id: psp,
+        ExpirationDate: "",
+        ActivationDate: "",
+        Code: "",
+        sku: "",
+        created_time: "",
+        account_id: "",
+        ConsumerId: ""
+      };
+    });
+
+    setLicenseData(builtRows);
+  }, [text]);
+
+  const textAreaChanged = (event: { target: { value: string } }) => {
+    setText(event.target.value);
+  };
+
+  const revokeLicenses = async () => {
+    if (!licenseData) return;
+    const revokeRequestBody = licenseData.map((license) => ({
+      psp: license.transaction_id,
+      code: license.Code
+    }));
+
+    const revokedLicenses = await licenseActions.revokeLicenses(revokeRequestBody);
+    if (Array.isArray(revokedLicenses) || revokedLicenses === null) {
+      setLicenseData(revokedLicenses);
+    }
+  };
+
+  return <PageShell>
+      <h1>Changes</h1>
+      <textarea name="Text2" cols={100} rows={41} onChange={textAreaChanged}></textarea>
+      <div>
+        <button onClick={revokeLicenses}>Revoke Licenses</button>
+      </div>
+
+      <div className="bulkRevokeLicensesSection">
+        <h2>Licenses</h2>
+      </div>
+      {<LicensesDisplay licenseData={licenseData} />}
+  </PageShell>;
+}

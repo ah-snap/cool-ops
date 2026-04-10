@@ -1,0 +1,119 @@
+.managePortForwardsPage {
+  width: 80%;
+  height: 100%;
+}
+
+.managePortForwardsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.managePortForwardsTitle {
+  margin-bottom: 0;
+}
+
+.managePortForwardsError {
+  color: #b91c1c;
+  margin-bottom: 12px;
+}
+
+.managePortForwardsGrid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+}
+
+.portForwardList {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  height: fit-content;
+}
+
+.portForwardListItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  padding: 12px;
+  background: #fff;
+}
+
+.portForwardListItemSelected {
+  background: #f2f8ff;
+}
+
+.portForwardListDescription {
+  font-size: 13px;
+  margin-top: 4px;
+  color: #333;
+}
+
+.portForwardListStatus {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.portForwardDetails {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.portForwardDetailsHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.portForwardDetailsStatus {
+  font-size: 13px;
+  color: #aaa;
+  margin-top: 4px;
+}
+
+.portForwardActionRow {
+  display: flex;
+  gap: 8px;
+}
+
+.portForwardCommand {
+  font-size: 12px;
+  margin-bottom: 8px;
+  color: #eee;
+}
+
+.portForwardSsoPrompt {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  background: #101a3c;
+}
+
+.portForwardSsoUrl {
+  font-size: 12px;
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+
+.portForwardLogPanel {
+  background: #0b1220;
+  color: #d1e8ff;
+  border-radius: 8px;
+  min-height: 380px;
+  max-height: 520px;
+  overflow: auto;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.35;
+}

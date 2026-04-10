@@ -1,21 +1,20 @@
 import React, { Suspense, lazy, useState } from "react";
 import '../../App.css';
-import '../../stylesheets/categories.css';
-import NavigationBar from "../NavigationBar";
+import NavigationBar from "../common/navigation/NavigationBar.jsx";
 import {
   Route,
   Routes
 } from "react-router-dom";
 
-const MappingPage = lazy(() => import("./MappingPage.tsx"));
-const DCodeValidationPage = lazy(() => import("./DCodeValidationPage"));
-const ShowroomDemoLicensesPage = lazy(() => import("./ShowroomDemoLicensesPage.tsx"));
-const MissingLicensePage = lazy(() => import("./MissingLicensePage.tsx"));
-const PSPLookup = lazy(() => import("./PSPLookup.tsx"));
-const BulkMissingLicensesPage = lazy(() => import("./BulkMissingLicensesPage.tsx"));
-const BulkWhiteLabelAssist = lazy(() => import("./BulkWhiteLabelAssist.tsx"));
-const BulkRevokeLicensePage = lazy(() => import("./BulkRevokeLicensePage.tsx"));
-const ManagePortForwardsPage = lazy(() => import("./ManagePortForwardsPage.tsx"));
+const MappingPage = lazy(() => import("./mapping/index.ts"));
+const DCodeValidationPage = lazy(() => import("./dcodeValidation/index.ts"));
+const ShowroomDemoLicensesPage = lazy(() => import("./showroomDemoLicenses/index.ts"));
+const MissingLicensePage = lazy(() => import("./missingLicense/index.ts"));
+const PSPLookup = lazy(() => import("./pspLookup/index.ts"));
+const BulkMissingLicensesPage = lazy(() => import("./bulkMissingLicenses/index.ts"));
+const BulkWhiteLabelAssist = lazy(() => import("./bulkWhiteLabelAssist/index.ts"));
+const BulkRevokeLicensePage = lazy(() => import("./bulkRevokeLicenses/index.ts"));
+const ManagePortForwardsPage = lazy(() => import("./managePortForwards/ManagePortForwardsPage.tsx"));
 
 function PageFallback() {
   return <div style={{ padding: 16 }}>Loading section...</div>;
