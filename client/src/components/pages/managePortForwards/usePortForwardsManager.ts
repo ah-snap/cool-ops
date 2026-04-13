@@ -185,6 +185,17 @@ export function usePortForwardsManager() {
 
     setError(null);
 
+    // If the complete URL has the code embedded, open it directly — the browser
+    // will auto-fill the device code box on the AWS SSO page.
+    if (awsSsoPrompt.verificationUriComplete) {
+      const opened = window.open(awsSsoPrompt.verificationUriComplete, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        setError("Pop-up was blocked. Please allow pop-ups for this site.");
+      }
+      return;
+    }
+
+    // Fallback: copy the code to clipboard and open the base verification URL.
     if (!navigator.clipboard?.writeText) {
       setError("Clipboard API is unavailable in this browser context.");
       return;

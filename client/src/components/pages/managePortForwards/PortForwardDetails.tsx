@@ -2,7 +2,7 @@ import React from "react";
 import type { PortForwardLogEntry, PortForwardSummary } from "../../../actions/portForwardActions.ts";
 import { statusColor } from "./utils.ts";
 
-type AwsSsoPrompt = { url: string; code: string };
+type AwsSsoPrompt = { url: string; code: string; verificationUriComplete?: string };
 
 type PortForwardDetailsProps = {
   selectedForward: PortForwardSummary | null;
@@ -59,7 +59,9 @@ export default function PortForwardDetails({
               <div className="portForwardSsoUrl">
                 <strong>SSO URL:</strong> {awsSsoPrompt.url}
               </div>
-              <button onClick={onAwsSsoAssist}>Copy Code + Open Login Page</button>
+              <button onClick={onAwsSsoAssist}>
+                {awsSsoPrompt.verificationUriComplete ? "Open Login Page (auto-fills code)" : "Copy Code + Open Login Page"}
+              </button>
             </div>
           )}
 

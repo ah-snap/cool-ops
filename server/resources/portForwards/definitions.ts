@@ -9,7 +9,7 @@ export type PortForwardDefinition = {
 
 const mongoSshKeyPath = process.env.PORT_FORWARD_MONGO_SSH_KEY_PATH || `${process.env.HOME || "/root"}/.ssh/prodovrckey.pem`;
 const snowdbSshKeyPath = process.env.PORT_FORWARD_SNOWDB_SSH_KEY_PATH || "/run/keys/snowdb.pem";
-const k8sContext = process.env.PORT_FORWARD_K8S_CONTEXT || "";
+const k8sContext = process.env.PORT_FORWARD_K8S_CONTEXT || "arn:aws:eks:us-east-2:367507620554:cluster/prod-cloud-services-green";
 const k8sNamespace = process.env.PORT_FORWARD_K8S_NAMESPACE || "boot-services";
 const k8sService = process.env.PORT_FORWARD_K8S_SERVICE || process.env.PORT_FORWARD_K8S_POD || "cs-license-process-boot";
 const k8sAddress = process.env.PORT_FORWARD_K8S_ADDRESS || "127.0.0.1";

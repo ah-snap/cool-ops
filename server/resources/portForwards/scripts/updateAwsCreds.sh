@@ -77,7 +77,7 @@ updateAwsCreds() {
     fi
 
     local profilesRaw
-    profilesRaw="${PORT_FORWARD_AWS_PROFILE_MAPPINGS:-prod_access,prod_access,Developer,367507620554,us-east-1;dev_access,dev_access,Developer,489561981168,us-east-1;snap_dev,dev_access,Developer,268853364163,us-east-1;snap_stage,ovrc_stage,Developer,642727902844,us-east-1}"
+    profilesRaw="${PORT_FORWARD_AWS_PROFILE_MAPPINGS:-prod_access,prod_access,Developer,367507620554,us-east-1;dev_access,dev_access,Developer,489561981168,us-east-1;snap_dev,dev_access,Developer,268853364163,us-east-1;snap_stage,ovrc_stage,Developer,642727902844,us-east-1;ovrc_prod_ssm,prod_access_1,SsmUser,445822975327,us-east-1}"
 
     local codeArtifactProfile
     codeArtifactProfile="${PORT_FORWARD_AWS_CODEARTIFACT_PROFILE:-prod_access}"
