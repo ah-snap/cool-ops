@@ -11,18 +11,23 @@ export async function getCommonNameInfo({ commonNameOrMac }: { commonNameOrMac: 
 
     const [sqlResult, mongoResult] = await results;
 
-    if (sqlResult.length === 0 && mongoResult.automationAccounts && mongoResult.automationAccounts.length > 0) {
-        const followUpSql = await repository.getCommonNameInfo({ commonNameOrMac, accountName: mongoResult.automationAccounts[0].accountName });
-        return { ...followUpSql[0], ...mongoResult  };
-    } else if (sqlResult.length > 0 &&  sqlResult[0].CertificateCommonName && (!mongoResult.automationAccounts || mongoResult.automationAccounts.length === 0)) {
-        console.log("No MongoDB results, but SQL found results. Checking for follow-up MongoDB data based on CertificateCommonName: ", sqlResult[0].CertificateCommonName);        
-        const followUpMongo = await mongoRespoisitory.getAutomationAccountsByCommonName(sqlResult[0].CertificateCommonName);
-        return { ...sqlResult[0], ...followUpMongo };
+    try {
+        if (sqlResult.length === 0 && mongoResult.automationAccounts && mongoResult.automationAccounts.length > 0) {
+            const followUpSql = await repository.getCommonNameInfo({ commonNameOrMac, accountName: mongoResult.automationAccounts[0].accountName });
+            return { ...followUpSql[0], ...mongoResult };
+        } else if (sqlResult.length > 0 && sqlResult[0].CertificateCommonName && (!mongoResult.automationAccounts || mongoResult.automationAccounts.length === 0)) {
+            console.log("No MongoDB results, but SQL found results. Checking for follow-up MongoDB data based on CertificateCommonName: ", sqlResult[0].CertificateCommonName);
+            const followUpMongo = await mongoRespoisitory.getAutomationAccountsByCommonName(sqlResult[0].CertificateCommonName);
+            return { ...sqlResult[0], ...followUpMongo };
+        }
+    } catch (err) {
+        console.log("Error during follow-up queries for common name info:", err);
     }
 
-    return { ...sqlResult[0], ...mongoResult  };
+
+    return { ...sqlResult[0], ...mongoResult };
 }
-    
+
 export async function getSimpleMappingInfo({ commonNameOrMac }: { commonNameOrMac: string; }): Promise<SimpleMappingInfoRow | undefined> {
     await security16.connect();
     console.log("Connected");

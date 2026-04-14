@@ -76,9 +76,9 @@ ssh -i ~/.ssh/prodovrckey.pem -N -o \
 
 ### 2. Create env files
 
-Create `server/.env` from `server/.env.example` and populate secrets.
+For Docker Compose, create root `.env` from `.env.example` and populate values.
 
-Optionally create root `.env` from `.env.compose.example` if you want to override compose defaults.
+If you run the server outside Docker via the legacy local workflow, you can still use `server/.env`.
 
 ### 3. Run with compose
 

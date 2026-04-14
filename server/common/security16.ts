@@ -26,6 +26,7 @@ return {
 
 export async function connect() {
     try {
+        console.log("Attempting to connect to SQL Server with config:", buildSqlConfig());
         const pool = await sql.connect(buildSqlConfig());
         console.log("Connected to SQL Server");
         return pool;

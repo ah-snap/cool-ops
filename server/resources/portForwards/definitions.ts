@@ -16,6 +16,18 @@ const k8sAddress = process.env.PORT_FORWARD_K8S_ADDRESS || "127.0.0.1";
 const k8sLocalPort = process.env.PORT_FORWARD_K8S_LOCAL_PORT || "8061";
 const k8sPodPort = process.env.PORT_FORWARD_K8S_POD_PORT || "80";
 
+const prodAccessProfile = process.env.PROD_ACCESS_PROFILE || "prod_access";
+const ovrcProdSsmProfile = process.env.OVRC_PROD_SSM_PROFILE || "ovrc_prod_ssm";
+
+const security16Host = process.env.SECURITY16_FORWARDING_HOST || "localhost";
+const security16Port = process.env.SECURITY16_PORT || "1433";
+
+const mongoLocalPort = process.env.PORT_FORWARD_MONGO_LOCAL_PORT || "9925";
+
+const snowLocalPort = process.env.PORT_FORWARD_SNOWDB_LOCAL_PORT || "5433";
+const snowHost = process.env.SNOWDB_HOST || "localhost";
+const snowForwardUser = process.env.SNOWDB_FORWARD_USER || "";
+
 export const portForwardDefinitions: PortForwardDefinition[] = [
   {
     id: "aws-credentials-refresh",
@@ -30,7 +42,7 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
     id: "security16-sql",
     name: "Security_16 SQL (1433)",
     description:
-      "AWS SSM port-forward to Security_16 SQL Server (10.201.1.20:1433) using prod_access profile.",
+      `AWS SSM port-forward to Security_16 SQL Server (${security16Host}:1433) using ${prodAccessProfile} profile.`,
     command: "aws",
     args: [
       "ssm",
@@ -42,23 +54,23 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
       "--document-name",
       "AWS-StartPortForwardingSessionToRemoteHost",
       "--parameters",
-      "host=10.201.1.20,portNumber=1433,localPortNumber=1433",
+      `host=${security16Host},portNumber=1433,localPortNumber=${security16Port}`,
       "--profile",
-      "prod_access"
+      prodAccessProfile
     ]
   },
   {
     id: "mongo-socks-9925",
-    name: "Mongo SOCKS Proxy (9925)",
+    name: `Mongo SOCKS Proxy (${mongoLocalPort})`,
     description:
-      "SSH dynamic SOCKS proxy on localhost:9925 via AWS SSM jump host using ovrc_prod_ssm profile.",
+      `SSH dynamic SOCKS proxy on localhost:${mongoLocalPort} via AWS SSM jump host using ${ovrcProdSsmProfile} profile.`,
     command: "ssh",
     args: [
       "-i",
       mongoSshKeyPath,
       "-N",
       "-o",
-      "ProxyCommand=aws ssm start-session --target i-0225b0afc753aaf54 --profile ovrc_prod_ssm --document-name AWS-StartSSHSession --parameters portNumber=22 --region us-east-1",
+      `ProxyCommand=aws ssm start-session --target i-0225b0afc753aaf54 --profile ${ovrcProdSsmProfile} --document-name AWS-StartSSHSession --parameters portNumber=22 --region us-east-1`,
       "-o",
       "StrictHostKeyChecking=no",
       "-o",
@@ -67,14 +79,14 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
       "AddressFamily=inet",
       "ubuntu@localhost",
       "-D",
-      "127.0.0.1:9925"
+      `127.0.0.1:${mongoLocalPort}`
     ]
   },
   {
     id: "snowdb-postgres-5433",
-    name: "SnowDB Postgres (5433)",
+    name: `SnowDB Postgres (${snowLocalPort})`,
     description:
-      "SSH local port-forward to SnowDB Postgres (prod-snow.cluster-cvzzsmsbqjep.us-east-1.rds.amazonaws.com:5432) on localhost:5433.",
+      `SSH local port-forward to SnowDB Postgres (${snowHost}:5432) on localhost:${snowLocalPort}.`,
     command: "ssh",
     args: [
       "-i",
@@ -87,8 +99,8 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
       "-o",
       "AddressFamily=inet",
       "-L",
-      "127.0.0.1:5433:prod-snow.cluster-cvzzsmsbqjep.us-east-1.rds.amazonaws.com:5432",
-      "ec2-user@ec2-54-237-232-127.compute-1.amazonaws.com"
+      `127.0.0.1:${snowLocalPort}:${snowHost}:5432`,
+      `${snowForwardUser}`
     ]
   },
   {
