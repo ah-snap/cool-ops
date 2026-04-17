@@ -1,6 +1,6 @@
 import sql from "mssql";
 import * as queries from "./queries.js"
-import type { CreateLegacyAccountInput, CreateLegacyAccountResultRow, MarkAccountAsConnectInput } from "./dtos.js";
+import type { CreateLegacyAccountInput, CreateLegacyAccountResultRow, MarkAccountAsConnectInput, UpdateAccountTypeInput } from "./dtos.js";
 
 export async function createLegacyAccount({ accountName, firstName, lastName, email, address, city, state, postalCode, phone, country, companyName }: CreateLegacyAccountInput): Promise<CreateLegacyAccountResultRow[]> {
     const query = queries.createLegacyAccount;
@@ -32,5 +32,17 @@ export async function markAccountAsConnect({ accountName }: MarkAccountAsConnect
 
     const result = await request.query(query);
     console.log("Mark Account As Connect Result", result);
+    return result.recordset;
+}
+
+export async function updateAccountType({ accountName, newType }: UpdateAccountTypeInput): Promise<unknown[]> {
+    const query = queries.updateAccountType;
+
+    const request = new sql.Request();
+    request.input('accontName', sql.VarChar(25), accountName);
+    request.input('accountType', sql.VarChar(10), newType);
+
+    const result = await request.query(query);
+    console.log("Update Account Type Result", result);
     return result.recordset;
 }

@@ -34,3 +34,19 @@ export async function markAccountAsConnect(req: Request<{ accountName: string; }
         console.log(err)
     }
 }
+
+export async function updateAccountType(req: Request<{ accountName: string; }, unknown, { newType: "Connect" | "Legacy" }>, res: Response) {
+    console.log("Updating Account Type", req.params, req.body)
+
+    const { accountName } = req.params;
+    const { newType } = req.body;
+    try {
+        const result = await service.updateAccountType({ accountName, newType });
+
+        console.log("Result", result);
+        res.send(result);
+    } catch (err) {
+        sendApiError(res, err);
+        console.log(err)
+    }
+}

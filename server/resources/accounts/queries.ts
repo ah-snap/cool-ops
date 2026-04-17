@@ -67,3 +67,10 @@ export const markAccountAsConnect = `
 UPDATE Security_16..Account
 SET ovrc_created = 1, no_connect=0, legacy_connect_upgrade=0
 WHERE Name = @accontName`
+
+export const updateAccountType = `
+UPDATE Security_16..Account
+SET ovrc_created = CASE WHEN @accountType = 'Connect' THEN 1 ELSE 0 END,
+    no_connect = CASE WHEN @accountType = 'Legacy' THEN 1 ELSE 0 END,
+    legacy_connect_upgrade = 0
+WHERE Name = @accontName`

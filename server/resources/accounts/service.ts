@@ -28,3 +28,13 @@ export async function markAccountAsConnect({ accountName }: { accountName: strin
         accountName
     });
 }
+
+export async function updateAccountType({ accountName, newType }: { accountName: string; newType: "Connect" | "Legacy" }): Promise<unknown[]> {
+
+    await security16.connect();
+
+    return repository.updateAccountType({
+        accountName,
+        newType
+    });
+}

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Mapping } from "../../../types.t";
 import MappingDisplay from "../../MappingDisplay.tsx";
-import { markAccountAsConnect } from "../../../actions/accountActions.ts";
+import * as accountActions from "../../../actions/accountActions.ts";
 import { isServerError, parseApiResponse } from "../../../actions/apiClient.ts";
 import { apiUrl } from "../../../config.ts";
 import PageShell from "../../common/layout/PageShell.tsx";
@@ -31,6 +31,16 @@ function MappingPage() {
     setMapping(data);
   };
 
+  const updateAccountType = async (accountName: string, newType: "Connect" | "Legacy") => {
+    const result = await accountActions.updateAccountType(accountName, newType);
+    if (result && 'error' in result) {
+      alert(result.error);
+    } else {
+      setMapping(result as Mapping);
+    }
+  };
+
+
   return <PageShell>
       <h1>Mapping</h1>
       <label>
@@ -39,19 +49,20 @@ function MappingPage() {
         <button disabled={!enableButton} onClick={attempt}>Attempt</button>
       </label>
 
+
       <div className="mappingPageContent">
         {<MappingDisplay mapping={mapping} />}
         <div>
           <button onClick={async () => {
             if (mapping) {
-              const result = await markAccountAsConnect(mapping.Name);
-              if (result && 'error' in result) {
-                alert(result.error);
-              } else {
-                setMapping(result as Mapping);
-              }
+              updateAccountType(mapping.Name, "Connect");
             }
           }}>Mark as Connect</button>
+          <button onClick={async () => {
+            if (mapping) {
+              updateAccountType(mapping.Name, "Legacy");
+            }
+          }}>Mark as Legacy</button>
         </div>
       </div>
   </PageShell>;

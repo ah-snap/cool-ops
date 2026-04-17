@@ -24,3 +24,20 @@ export async function markAccountAsConnect(accountName: string) : Promise<Mappin
 
     return getAccountMappingByCommonNameOrMac(accountName);
 }
+
+export async function updateAccountType(accountName: string, newType: "Connect" | "Legacy") : Promise<Mapping | ServerError | null> {
+    const response = await fetch(apiUrl(`/accounts/type/${accountName}`), {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ newType })
+    });
+    const data = await parseApiResponse<unknown[]>(response);
+
+    if (data && typeof data === "object" && "error" in data) {
+        return data as ServerError;
+    }
+
+    return getAccountMappingByCommonNameOrMac(accountName);
+}

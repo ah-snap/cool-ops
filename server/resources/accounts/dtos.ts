@@ -22,3 +22,8 @@ export interface CreateLegacyAccountInput {
 export interface MarkAccountAsConnectInput {
     accountName: string;
 }
+
+export interface UpdateAccountTypeInput {
+    accountName: string;
+    newType: "Connect" | "Legacy";
+}
