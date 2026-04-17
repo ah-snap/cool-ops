@@ -1,4 +1,13 @@
-import { LicenseData, LicenseRequestBody, RevokeLicensesItem, ServerError, SnowLicenseAndTransactionRequestBody } from "../types.t";
+import {
+    LicenseData,
+    LicenseDetailsActionResult,
+    LicenseDetailsPayload,
+    LicenseDetailsTargetType,
+    LicenseRequestBody,
+    RevokeLicensesItem,
+    ServerError,
+    SnowLicenseAndTransactionRequestBody,
+} from "../types.t";
 import { parseApiResponse } from "./apiClient.ts";
 import { apiUrl, d365Url } from "../config.ts";
 
@@ -85,4 +94,23 @@ export async function licenseProcessCall(requestBody: LicenseRequestBody, onComp
     }
 
     return data;
+}
+
+export async function getLicenseDetails(type: LicenseDetailsTargetType, value: string): Promise<LicenseDetailsPayload | ServerError> {
+    const response = await fetch(apiUrl(`/licenses/details/${type}/${encodeURIComponent(value)}`));
+    return await parseApiResponse<LicenseDetailsPayload>(response);
+}
+
+export async function revokeLicenseDetailsTarget(type: LicenseDetailsTargetType, value: string): Promise<LicenseDetailsActionResult | ServerError> {
+    const response = await fetch(apiUrl(`/licenses/details/${type}/${encodeURIComponent(value)}/revoke`), {
+        method: "POST",
+    });
+    return await parseApiResponse<LicenseDetailsActionResult>(response);
+}
+
+export async function deleteLicenseDetailsTarget(type: LicenseDetailsTargetType, value: string): Promise<LicenseDetailsActionResult | ServerError> {
+    const response = await fetch(apiUrl(`/licenses/details/${type}/${encodeURIComponent(value)}`), {
+        method: "DELETE",
+    });
+    return await parseApiResponse<LicenseDetailsActionResult>(response);
 }

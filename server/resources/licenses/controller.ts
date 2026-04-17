@@ -170,3 +170,57 @@ export async function expireLicenses(req: Request<unknown, unknown, { licenses: 
         console.log(err)
     }
 }
+
+export async function getLicenseDetails(req: Request<{ type: "code" | "psp"; value: string; }>, res: Response) {
+    const { type, value } = req.params;
+    console.log("Getting license details", req.params);
+
+    if (type !== "code" && type !== "psp") {
+        res.status(400).send({ error: "type must be 'code' or 'psp'" });
+        return;
+    }
+
+    try {
+        const result = await service.getLicenseDetails({ type, value });
+        res.send(result);
+    } catch (err) {
+        sendApiError(res, err);
+        console.log(err);
+    }
+}
+
+export async function revokeLicenseDetailsTarget(req: Request<{ type: "code" | "psp"; value: string; }>, res: Response) {
+    const { type, value } = req.params;
+    console.log("Revoking license details target", req.params);
+
+    if (type !== "code" && type !== "psp") {
+        res.status(400).send({ error: "type must be 'code' or 'psp'" });
+        return;
+    }
+
+    try {
+        const result = await service.revokeLicenseDetailsTarget({ type, value });
+        res.send(result);
+    } catch (err) {
+        sendApiError(res, err);
+        console.log(err);
+    }
+}
+
+export async function deleteLicenseDetailsTarget(req: Request<{ type: "code" | "psp"; value: string; }>, res: Response) {
+    const { type, value } = req.params;
+    console.log("Deleting license details target", req.params);
+
+    if (type !== "code" && type !== "psp") {
+        res.status(400).send({ error: "type must be 'code' or 'psp'" });
+        return;
+    }
+
+    try {
+        const result = await service.deleteLicenseDetailsTarget({ type, value });
+        res.send(result);
+    } catch (err) {
+        sendApiError(res, err);
+        console.log(err);
+    }
+}

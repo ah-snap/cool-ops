@@ -3,6 +3,8 @@ import * as repository from "./repository.js";
 import * as snowdbRepository from "./snowdbRepository.js";
 import type {
     ExpiredLicenseRow,
+    LicenseDetailsPayload,
+    LicenseDetailsTargetInput,
     LicenseTransactionRow,
     PotentiallyMissingPspRow,
     StripeValidationRow,
@@ -316,4 +318,104 @@ export async function expireLicenses({ licenses }: { licenses: Array<{ code?: st
     console.log("Connected to security16");
     
     return await repository.expireLicenses({ licenses });
+}
+
+function normalizePsp(psp: string): string {
+    return psp.replace(/-(Connect|Assist|Assist-Premium)$/i, "");
+}
+
+function getPspHintsFromSecurityRows(
+    target: LicenseDetailsTargetInput,
+    securitySubscriptionCodes: Array<{ psp?: string | null; }>,
+    securityVendorTransactions: Array<{ transaction_id?: string | null; }>
+): string[] {
+    if (target.type === "psp") {
+        return [normalizePsp(target.value)];
+    }
+
+    const hints = new Set<string>();
+    securitySubscriptionCodes.forEach((row) => {
+        if (row.psp) {
+            hints.add(normalizePsp(row.psp));
+        }
+    });
+    securityVendorTransactions.forEach((row) => {
+        if (row.transaction_id) {
+            hints.add(normalizePsp(row.transaction_id));
+        }
+    });
+
+    return Array.from(hints);
+}
+
+export async function getLicenseDetails(target: LicenseDetailsTargetInput): Promise<LicenseDetailsPayload> {
+    await security16.connect();
+
+    const [securitySubscriptionCodes, securityVendorTransactions] = await Promise.all([
+        repository.getSecuritySubscriptionCodeDetails(target),
+        repository.getSecurityVendorTransactionDetails(target),
+    ]);
+
+    const pspHints = getPspHintsFromSecurityRows(target, securitySubscriptionCodes, securityVendorTransactions);
+    let snow = {
+        systemSubscriptions: [] as Record<string, unknown>[],
+        systemSubscriptionTransactions: [] as Record<string, unknown>[],
+        subscriptions: [] as Record<string, unknown>[],
+    };
+
+    try {
+        snow = await snowdbRepository.getSnowLicenseDetails(pspHints);
+    } catch (err) {
+        console.error("Error fetching Snow license details", err);
+    }
+
+    return {
+        sourceType: target.type,
+        sourceValue: target.value,
+        securitySubscriptionCodes,
+        securityVendorTransactions,
+        snowSystemSubscriptions: snow.systemSubscriptions,
+        snowSystemSubscriptionTransactions: snow.systemSubscriptionTransactions,
+        snowSubscriptions: snow.subscriptions,
+    };
+}
+
+export async function revokeLicenseDetailsTarget(target: LicenseDetailsTargetInput): Promise<{
+    security: { rowsAffected: number[]; };
+    snow: { rowCount: number; };
+}> {
+    await security16.connect();
+
+    const [securitySubscriptionCodes, securityVendorTransactions] = await Promise.all([
+        repository.getSecuritySubscriptionCodeDetails(target),
+        repository.getSecurityVendorTransactionDetails(target),
+    ]);
+    const pspHints = getPspHintsFromSecurityRows(target, securitySubscriptionCodes, securityVendorTransactions);
+
+    const [security, snow] = await Promise.all([
+        repository.revokeLicenseTarget(target),
+        snowdbRepository.revokeSnowLicenseTarget(pspHints),
+    ]);
+
+    return { security, snow };
+}
+
+export async function deleteLicenseDetailsTarget(target: LicenseDetailsTargetInput): Promise<{
+    security: { rowsAffected: number[]; };
+    snow: { deletedSubscriptions: number; deletedTransactions: number; };
+}> {
+    await security16.connect();
+
+    const [securitySubscriptionCodes, securityVendorTransactions] = await Promise.all([
+        repository.getSecuritySubscriptionCodeDetails(target),
+        repository.getSecurityVendorTransactionDetails(target),
+    ]);
+    const pspHints = getPspHintsFromSecurityRows(target, securitySubscriptionCodes, securityVendorTransactions);
+
+    const [security, snow] = await Promise.all([
+        repository.deleteLicenseTarget(target),
+        snowdbRepository.deleteSnowLicenseTarget(pspHints),
+    ]);
+
+    return { security, snow };
 }

@@ -2,9 +2,12 @@ import sql from "mssql";
 import * as queries from "./queries.js"
 import type {
     ExpiredLicenseRow,
+    LicenseDetailsTargetInput,
     LicenseTransactionRow,
     PotentiallyMissingPspRow,
     ReferenceTransactionFields,
+    SecuritySubscriptionCodeDetailRow,
+    SecurityVendorTransactionDetailRow,
     StripeValidationRow,
     SubscriptionCodeValues,
 } from "./dtos.js";
@@ -308,4 +311,128 @@ export async function expireLicenses({ licenses }: { licenses: Array<{ code?: st
 
     console.log("End result", endResult);
     return endResult;
+}
+
+export async function getSecuritySubscriptionCodeDetails(target: LicenseDetailsTargetInput): Promise<SecuritySubscriptionCodeDetailRow[]> {
+    const request = new sql.Request();
+    const whereClause = target.type === "code"
+        ? "SC.Code = @value"
+        : "VT.transaction_id LIKE CONCAT(@value, '%')";
+
+    request.input("value", sql.VarChar(80), target.value);
+
+    const query = `
+        SELECT
+            SC.Id AS id,
+            SC.Code AS code,
+            SC.Duration AS duration,
+            SC.ConsumerId AS consumerId,
+            SC.ActivationDate AS activationDate,
+            SC.ExpirationDate AS expirationDate,
+            SC.SubscriptionCodeBatchId AS subscriptionCodeBatchId,
+            SC.ProductId AS productId,
+            SC.AppliedByUserId AS appliedByUserId,
+            SC.RevokedByAccountId AS revokedByAccountId,
+            SC.RevocationDate AS revocationDate,
+            SC.transaction_id AS transactionDbId,
+            VT.transaction_id AS psp,
+            VT.account_id AS accountId,
+            A.Name AS accountName,
+            P.Name AS productName
+        FROM Security_16..SubscriptionCode SC
+        LEFT JOIN Security_16..vendor_transaction VT ON VT.Id = SC.transaction_id
+        LEFT JOIN Security_16..Account A ON A.Id = VT.account_id
+        LEFT JOIN Security_16..Product P ON P.Id = SC.ProductId
+        WHERE ${whereClause}
+        ORDER BY SC.ActivationDate DESC, SC.Id DESC`;
+
+    const result = await request.query(query);
+    return result.recordset;
+}
+
+export async function getSecurityVendorTransactionDetails(target: LicenseDetailsTargetInput): Promise<SecurityVendorTransactionDetailRow[]> {
+    const request = new sql.Request();
+    const whereClause = target.type === "code"
+        ? `VT.Id IN (
+            SELECT SC.transaction_id
+            FROM Security_16..SubscriptionCode SC
+            WHERE SC.Code = @value
+        )`
+        : "VT.transaction_id LIKE CONCAT(@value, '%')";
+
+    request.input("value", sql.VarChar(80), target.value);
+
+    const query = `
+        SELECT
+            VT.Id,
+            VT.transaction_id,
+            VT.account_id,
+            VT.vendor_id,
+            VT.cost,
+            VT.product_name,
+            VT.sku,
+            VT.is_recurring,
+            VT.created_time,
+            VT.last_update_time,
+            VT.dealer_id,
+            VT.tax,
+            VT.tax_percent,
+            VT.cancellation_date
+        FROM Security_16..vendor_transaction VT
+        WHERE ${whereClause}
+        ORDER BY VT.created_time DESC, VT.Id DESC`;
+
+    const result = await request.query(query);
+    return result.recordset;
+}
+
+export async function revokeLicenseTarget(target: LicenseDetailsTargetInput): Promise<{ rowsAffected: number[]; }> {
+    const request = new sql.Request();
+    request.input("value", sql.VarChar(80), target.value);
+    const whereClause = target.type === "code"
+        ? "SC.Code = @value"
+        : "VT.transaction_id LIKE CONCAT(@value, '%')";
+
+    const query = `
+        UPDATE SC
+        SET ExpirationDate = DATEADD(day, -1, CONVERT(date, GETDATE()))
+        FROM Security_16..SubscriptionCode SC
+        LEFT JOIN Security_16..vendor_transaction VT ON VT.Id = SC.transaction_id
+        WHERE ${whereClause}`;
+
+    const result = await request.query(query);
+    return { rowsAffected: result.rowsAffected };
+}
+
+export async function deleteLicenseTarget(target: LicenseDetailsTargetInput): Promise<{ rowsAffected: number[]; }> {
+    const request = new sql.Request();
+    request.input("value", sql.VarChar(80), target.value);
+    const whereClause = target.type === "code"
+        ? "SC.Code = @value"
+        : "VT.transaction_id LIKE CONCAT(@value, '%')";
+
+    const query = `
+        DECLARE @MatchedTransactions TABLE (Id BIGINT PRIMARY KEY);
+
+        INSERT INTO @MatchedTransactions (Id)
+        SELECT DISTINCT VT.Id
+        FROM Security_16..vendor_transaction VT
+        LEFT JOIN Security_16..SubscriptionCode SC ON SC.transaction_id = VT.Id
+        WHERE ${whereClause};
+
+        DELETE SC
+        FROM Security_16..SubscriptionCode SC
+        INNER JOIN @MatchedTransactions MT ON MT.Id = SC.transaction_id;
+
+        DELETE VT
+        FROM Security_16..vendor_transaction VT
+        INNER JOIN @MatchedTransactions MT ON MT.Id = VT.Id
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM Security_16..SubscriptionCode SC
+            WHERE SC.transaction_id = VT.Id
+        );`;
+
+    const result = await request.query(query);
+    return { rowsAffected: result.rowsAffected };
 }

@@ -11,7 +11,7 @@ export default function PageShell({ children, containerClassName = "", container
   const className = ["pageShellContainer", containerClassName].filter(Boolean).join(" ");
 
   return (
-    <div className="pageShellWrapper">
+    <div className="pageShellWrapper categories">
       <div className={className} style={containerStyle}>
         {children}
       </div>

@@ -94,3 +94,54 @@ export interface ExpiredLicenseRow {
     Code: string;
     transaction_id: string;
 }
+
+export interface SecuritySubscriptionCodeDetailRow {
+    id: number;
+    code: string;
+    duration: string;
+    consumerId: number;
+    activationDate: Date;
+    expirationDate: Date;
+    subscriptionCodeBatchId: number;
+    productId: number;
+    appliedByUserId: number | null;
+    revokedByAccountId: number | null;
+    revocationDate: Date | null;
+    transactionDbId: number | null;
+    psp: string | null;
+    accountId: number | null;
+    accountName: string | null;
+    productName: string | null;
+}
+
+export interface SecurityVendorTransactionDetailRow {
+    id: number;
+    transaction_id: string;
+    account_id: number;
+    vendor_id: number;
+    cost: number;
+    product_name: string;
+    sku: string;
+    is_recurring: boolean;
+    created_time: Date;
+    last_update_time: Date;
+    dealer_id: number;
+    tax: number;
+    tax_percent: number;
+    cancellation_date: Date | null;
+}
+
+export interface LicenseDetailsPayload {
+    sourceType: "code" | "psp";
+    sourceValue: string;
+    securitySubscriptionCodes: SecuritySubscriptionCodeDetailRow[];
+    securityVendorTransactions: SecurityVendorTransactionDetailRow[];
+    snowSystemSubscriptions: Record<string, unknown>[];
+    snowSystemSubscriptionTransactions: Record<string, unknown>[];
+    snowSubscriptions: Record<string, unknown>[];
+}
+
+export interface LicenseDetailsTargetInput {
+    type: "code" | "psp";
+    value: string;
+}

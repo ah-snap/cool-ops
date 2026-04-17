@@ -96,3 +96,26 @@ export type RevokeLicensesItem = {
     code?: string;
     psp?: string;
 }
+
+export type LicenseDetailsTargetType = "code" | "psp";
+
+export type LicenseDetailsPayload = {
+    sourceType: LicenseDetailsTargetType;
+    sourceValue: string;
+    securitySubscriptionCodes: Record<string, unknown>[];
+    securityVendorTransactions: Record<string, unknown>[];
+    snowSystemSubscriptions: Record<string, unknown>[];
+    snowSystemSubscriptionTransactions: Record<string, unknown>[];
+    snowSubscriptions: Record<string, unknown>[];
+}
+
+export type LicenseDetailsActionResult = {
+    security: {
+        rowsAffected?: number[];
+    };
+    snow: {
+        rowCount?: number;
+        deletedSubscriptions?: number;
+        deletedTransactions?: number;
+    };
+}

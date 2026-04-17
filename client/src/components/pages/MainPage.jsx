@@ -16,6 +16,7 @@ const DealerPage = lazy(() => import("./dealerPage/index.tsx"));
 const BulkWhiteLabelAssist = lazy(() => import("./bulkWhiteLabelAssist/index.ts"));
 const BulkRevokeLicensePage = lazy(() => import("./bulkRevokeLicenses/index.ts"));
 const ManagePortForwardsPage = lazy(() => import("./managePortForwards/ManagePortForwardsPage.tsx"));
+const LicenseDetailsPage = lazy(() => import("./licenseDetails/LicenseDetailsPage.tsx"));
 
 function PageFallback() {
   return <div style={{ padding: 16 }}>Loading section...</div>;
@@ -39,7 +40,7 @@ function MainPage() {
   }
 
   return (
-    <div style={{display: "flex", overflow: "hidden"}}>
+    <div className="categories" style={{display: "flex", overflow: "hidden"}}>
       <NavigationBar date={date} setDate={setDateAndClear} options={options} setOptions={setOptionsAndClear} />
       <div style={{overflowY: "scroll", height: "100vh", width: "100%"}}>
         <React.StrictMode>
@@ -55,6 +56,8 @@ function MainPage() {
               <Route path="/bulkRevokeLicenses" element={<BulkRevokeLicensePage />} />
               <Route path="/managePortForwards" element={<ManagePortForwardsPage />} />
               <Route path="/dealer" element={<DealerPage />} />
+              <Route path="licenseDetails/:type/:value" element={<LicenseDetailsPage />} />
+              <Route path="/licenseDetails/:type/:value" element={<LicenseDetailsPage />} />
             </Routes>
           </Suspense>
         </React.StrictMode>
