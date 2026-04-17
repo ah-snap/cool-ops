@@ -33,10 +33,10 @@ services:
     volumes:
       - ./server:/app
       - api_node_modules:/app/node_modules
-      - ${USERPROFILE}/.aws:/root/.aws:rw
+      - ${HOME:-${USERPROFILE}}/.aws:/root/.aws:rw
       - ./prodovrckey.pem:/run/keys/prodovrckey.pem:ro
       - ./snowdb.pem:/run/keys/snowdb.pem:ro
-      - ${USERPROFILE}/.kube:/root/.kube:ro
+      - ${HOME:-${USERPROFILE}}/.kube:/root/.kube:ro
     ports:
       - "3003:3003"
       - "8061:8061"
