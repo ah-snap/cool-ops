@@ -6,6 +6,7 @@ import { automationAccountsRouter } from '../resources/automationAccounts/automa
 import { showroomDemoLicenses } from '../resources/showroomDemoLicenses/router.ts';
 import { adyenRouter } from '../resources/adyen/router.ts';
 import { portForwardsRouter } from '../resources/portForwards/router.ts';
+import { dealersRouter } from '../resources/dealers/router.ts';
 
 
 export const router = Router();
@@ -18,3 +19,4 @@ router.use('/showroomDemoLicenses', showroomDemoLicenses);
 router.use('/accounts', accountsRouter);
 router.use('/adyen', adyenRouter);
 router.use('/portForwards', portForwardsRouter);
+router.use('/dealers', dealersRouter);

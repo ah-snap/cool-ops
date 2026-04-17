@@ -12,6 +12,7 @@ const ShowroomDemoLicensesPage = lazy(() => import("./showroomDemoLicenses/index
 const MissingLicensePage = lazy(() => import("./missingLicense/index.ts"));
 const PSPLookup = lazy(() => import("./pspLookup/index.ts"));
 const BulkMissingLicensesPage = lazy(() => import("./bulkMissingLicenses/index.ts"));
+const DealerPage = lazy(() => import("./dealerPage/index.tsx"));
 const BulkWhiteLabelAssist = lazy(() => import("./bulkWhiteLabelAssist/index.ts"));
 const BulkRevokeLicensePage = lazy(() => import("./bulkRevokeLicenses/index.ts"));
 const ManagePortForwardsPage = lazy(() => import("./managePortForwards/ManagePortForwardsPage.tsx"));
@@ -53,6 +54,7 @@ function MainPage() {
               <Route path="/bulkWhiteLabelAssist" element={<BulkWhiteLabelAssist />} />
               <Route path="/bulkRevokeLicenses" element={<BulkRevokeLicensePage />} />
               <Route path="/managePortForwards" element={<ManagePortForwardsPage />} />
+              <Route path="/dealer" element={<DealerPage />} />
             </Routes>
           </Suspense>
         </React.StrictMode>

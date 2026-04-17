@@ -86,6 +86,12 @@ export type ServerError = {
     details?: unknown;
 }
 
+export type DealerInfo = {
+    accountNum: string;
+    freeConnectLicenses: number;
+    [key: string]: unknown;
+}
+
 export type RevokeLicensesItem = {
     code?: string;
     psp?: string;

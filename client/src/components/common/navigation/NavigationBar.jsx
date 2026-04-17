@@ -10,7 +10,7 @@ function NavigationBar() {
           <li>Home</li>
           <NavigationLink to={'/mapping'}>Mapping</NavigationLink>
           <NavigationLink to={'/licenses'}>Licenses</NavigationLink>
-          <NavigationLink to={'/showroomDemoLicenses'}>Showroom Demo Licenses</NavigationLink>
+          <NavigationLink to={'/dealer'}>Dealers</NavigationLink>
           <NavigationLink to={'/pspLookup'}>PSP Lookup</NavigationLink>
           <NavigationLink to={'/bulkMissingLicenses'}>Bulk Missing Licenses</NavigationLink>
           <NavigationLink to={'/bulkWhiteLabelAssist'}>Bulk White Label Assist</NavigationLink>
