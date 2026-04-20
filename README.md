@@ -74,8 +74,11 @@ Most users can copy this directly from MongoDB Compass.
 #### AWS login profile
 
 - `PORT_FORWARD_AWS_SSO_LOGIN_PROFILE`
+- `PORT_FORWARD_AWS_SSO_USE_DEVICE_CODE`
 
 This is the profile used when the app runs `aws sso login` from the Manage Port Forwards page.
+
+Set `PORT_FORWARD_AWS_SSO_USE_DEVICE_CODE=true` (recommended in Docker/dev containers) to force AWS CLI device-code login, which avoids localhost OAuth callback failures from containerized environments.
 
 To inspect available profiles:
 
@@ -176,7 +179,7 @@ test -f ./snowdb.pem
 From the repository root:
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build
+docker compose -f docker-compose.dev.yml up --build -d
 ```
 
 Endpoints:

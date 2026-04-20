@@ -1,29 +1,32 @@
 import type { PortForwardLogEntry, PortForwardSummary } from "../../../actions/portForwardActions.ts";
 
-export function extractAwsSsoPrompt(logs: PortForwardLogEntry[]): { url: string; code: string; verificationUriComplete?: string } | null {
+export function extractAwsSsoPrompt(logs: PortForwardLogEntry[]): { url: string; code?: string; verificationUriComplete?: string } | null {
   let url = "";
   let code = "";
   let verificationUriComplete = "";
+  const urlRegex = /(https:\/\/[^\s]+)/i;
 
   for (let index = logs.length - 1; index >= 0; index -= 1) {
     const message = logs[index].message.trim();
+    const urlMatch = message.match(urlRegex);
+    const discoveredUrl = urlMatch ? urlMatch[1] : "";
 
     // Prefer a complete URL that already has the code embedded as a query param
-    if (!verificationUriComplete && /^https:\/\//i.test(message)) {
-      const embeddedCode = message.match(/[?&][a-z_]*code[a-z_]*=([A-Z0-9]{4}-[A-Z0-9]{4})/i);
+    if (!verificationUriComplete && discoveredUrl) {
+      const embeddedCode = discoveredUrl.match(/[?&][a-z_]*code[a-z_]*=([A-Z0-9]{4}-[A-Z0-9]{4})/i);
       if (embeddedCode) {
-        verificationUriComplete = message;
+        verificationUriComplete = discoveredUrl;
         if (!code) {
           code = embeddedCode[1];
         }
         if (!url) {
-          url = message;
+          url = discoveredUrl;
         }
       }
     }
 
-    if (!url && /^https:\/\//i.test(message)) {
-      url = message;
+    if (!url && discoveredUrl) {
+      url = discoveredUrl;
     }
 
     if (!code) {
@@ -33,8 +36,12 @@ export function extractAwsSsoPrompt(logs: PortForwardLogEntry[]): { url: string;
       }
     }
 
-    if (url && code) {
-      return { url, code, verificationUriComplete: verificationUriComplete || undefined };
+    if (url) {
+      return {
+        url,
+        code: code || undefined,
+        verificationUriComplete: verificationUriComplete || undefined
+      };
     }
   }
 

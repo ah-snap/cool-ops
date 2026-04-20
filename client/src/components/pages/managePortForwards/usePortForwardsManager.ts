@@ -195,6 +195,14 @@ export function usePortForwardsManager() {
       return;
     }
 
+    if (!awsSsoPrompt.code) {
+      const opened = window.open(awsSsoPrompt.url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        setError("Pop-up was blocked. Please allow pop-ups for this site.");
+      }
+      return;
+    }
+
     // Fallback: copy the code to clipboard and open the base verification URL.
     if (!navigator.clipboard?.writeText) {
       setError("Clipboard API is unavailable in this browser context.");

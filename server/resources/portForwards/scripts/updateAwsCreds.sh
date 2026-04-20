@@ -53,8 +53,15 @@ ssoLogin() {
         return 1
     fi
 
+    local useDeviceCode="${PORT_FORWARD_AWS_SSO_USE_DEVICE_CODE:-true}"
+
     echo "Running AWS SSO login for profile: $awsProfile"
-    aws sso login --profile "$awsProfile"
+    if [[ "$useDeviceCode" == "1" || "$useDeviceCode" == "true" || "$useDeviceCode" == "yes" || "$useDeviceCode" == "on" ]]; then
+        echo "Using device-code flow for AWS SSO login (recommended for Docker/remote environments)."
+        aws sso login --profile "$awsProfile" --use-device-code
+    else
+        aws sso login --profile "$awsProfile"
+    fi
     echo "AWS SSO login complete for profile: $awsProfile"
 }
 
