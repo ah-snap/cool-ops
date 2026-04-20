@@ -135,7 +135,10 @@ pick_default_profile() {
 
 require_command aws
 
-mapfile -t available_profiles < <(get_aws_profiles)
+available_profiles=()
+while IFS= read -r profile; do
+    available_profiles+=("$profile")
+done < <(get_aws_profiles)
 if (( ${#available_profiles[@]} == 0 )); then
     echo 'No AWS profiles were found. Configure ~/.aws first.' >&2
     exit 1
