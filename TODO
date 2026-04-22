@@ -1,16 +1,25 @@
-Resolve the warnings when starting docker
-Resolve Error in tsconfig
-Get code into commitable state
-Get env files into top level (to make set up easier)
-Commit past long amount of changes
-Pull out pages that aren't needed anymore
-Put usage instructions for existing pages
+Routes for existing pages /mapping/{commonNameOrMac}
+Start focus on search control
+Hitting enter on start textboxes should trigger the button
+Double check that I added the snow side into the license control (and not just into the assist white label page)
+UI elements on portforwards page button that indicates states of forwards 🔴🔵🟢 maybe, could add a ⏩ button to start all
 
-Pull portforwards into server code
-Create Page to view/manage port forwards
-(dbForwardProd, dbForwardProdSnowdb, dbForwardProdMongoSocks)
+Forward DB ports to host machine so I don't have to forward them anymore
+Move forwards to separate image/service from the normal backend service
 
-Same portforward management but for license process
+Page for datastored generic queries
+
+UI to update connect_tier
+
+Potential extra infos for mapping:
+    Invite history
+    When displaying multiple automation accounts cross out deleted entries
+    Lookup by account id
+
+Toggle for staging mode
+Staging mode adds
+    * Create account in configurable state
 
 Long future nice adds
 Websocket events to be able to load pages with info from jira tickets
+Split app into plugins so that different teams could use different plugins

@@ -21,7 +21,11 @@ const columns: GridColDef[] = [
     { field: 'originalVersion', headerName: 'OS Version', width: 150 },
     { field: 'XBackwardsUser', headerName: 'X-Backwards-User', width: 400 },
     { field: 'stripeCustomerID', headerName: 'Stripe Customer ID', width: 200 },
-    { field: 'connect_tier', headerName: 'Connect Tier', width: 150 }
+    { field: 'connect_tier', headerName: 'Connect Tier', width: 150 },
+    { field: 'auth_token', headerName: 'Auth Token', width: 200 },
+    { field: 'isTestPassword', headerName: 'Test Password', width: 150, type: 'boolean' },
+    { field: 'splitKey', headerName: 'Split Key', width: 200 }
+
 ];
 
 type Row = Mapping & {
@@ -71,7 +75,8 @@ const calculateC4Row = (mapping: Mapping): Row => {
         ...mapping,
         id: mapping?.id ?? 0,
         Source: "C4",
-        XBackwardsUser: `{"userId": ${mapping.userId}, "accountId": ${mapping.accountId}, "internal": true}`
+        XBackwardsUser: `{"userId": ${mapping.userId}, "accountId": ${mapping.accountId}, "internal": true}`,
+        dCode: mapping.DCodes ?? mapping.dCode
     }
 }
 
@@ -153,7 +158,10 @@ export default function MappingDisplay({ mapping }: { mapping: Mapping | null })
                             XBackwardsUser: false,
                             external_id: false,
                             stripeCustomerID: false,
-                            id: false
+                            id: false,
+                            auth_token: false,
+                            isTestPassword: false,
+                            splitKey: false
                         },
                     },
                 }}

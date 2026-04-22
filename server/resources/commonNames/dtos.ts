@@ -41,6 +41,13 @@ export interface SimpleMappingInfoRow {
 
 export interface MongoAutomationAccount {
     [key: string]: unknown;
+    accountName: string;
+    csAccountId: number;
+    csExternalAccountId: string;
+    locationId: string;
+    password: string;
+    deleted: boolean;
+    projectType: string;
 }
 
 export interface MongoCommonNameInfo {

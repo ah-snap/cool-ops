@@ -132,6 +132,7 @@ export async function getAutomationAccountsByCommonName(commonNameOrMac: string)
         result.locationName = device.location?.locationName;
         result.csAccountId = device.automationAccount?.csAccountId;
         result.companyName = device.company?.companyName;
+        result.firmwareVersion = device.firmware;
 
         if (device.location?.dealerId !== device.dealerId) {
             console.log("Location does not belong to company", device.company._id);

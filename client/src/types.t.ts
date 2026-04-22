@@ -21,6 +21,8 @@ export type Mapping = {
     originalVersion?: string;
     excludeAssist?: boolean;
     is_domestic: boolean;
+    DCodes?: string;
+    firmwareVersion?: string;
     error?: any;
 }
 

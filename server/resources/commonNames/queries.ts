@@ -31,7 +31,10 @@ export const getAutomationAccountInfo = `SELECT TOP 1
      ,a.handoff_date
      ,SV.OriginalVersion as originalVersion
      ,VARS.vendor_customer_id as stripeCustomerID
-     ,C.connect_tier
+           ,C.connect_tier
+           ,CAT.auth_token
+           ,IIF(HASHBYTES('MD5', CONCAT(N'Control4!', U.PasswordSalt)) = u.PasswordHash,1, 0) AS isTestPassword
+           ,CONCAT('userid:', u.id) AS splitKey
 FROM Security_16..Account A
          INNER JOIN Security_16..[User] U ON A.Id = U.AccountId AND U.IsOwner = 1
          INNER JOIN Security_16..Consumer C ON A.Id = C.AccountId
@@ -40,6 +43,7 @@ FROM Security_16..Account A
          LEFT OUTER JOIN Security_16..Controllers CONT on A.Id = CONT.AccountId
          LEFT OUTER JOIN Security_16..SoftwareVersions SV ON CONT.SoftwareVersionId = SV.Id
          LEFT OUTER JOIN Security_16..vendor_account_rel VARS ON A.Id = VARS.account_id AND VARS.vendor_id = 1
+         LEFT OUTER JOIN Security_16..client_auth_token CAT ON CAT.user_id = U.ID AND CAT.status = 1 AND CAT.expiration_time > GETDATE()
          CROSS APPLY
      (
          SELECT STUFF((
