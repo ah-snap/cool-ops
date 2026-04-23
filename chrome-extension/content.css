@@ -1,0 +1,26 @@
+.cool-ops-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  background: #f4f5f7;
+  color: inherit;
+  font-size: 0.85em;
+  line-height: 1.2;
+  text-decoration: none !important;
+  cursor: pointer;
+  vertical-align: baseline;
+}
+
+.cool-ops-link-btn:hover {
+  background: #dfe1e6;
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.cool-ops-link-btn:focus-visible {
+  outline: 2px solid #0052cc;
+  outline-offset: 1px;
+}

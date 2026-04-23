@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Cool Ops Jira Linker",
+  "version": "0.1.0",
+  "description": "Adds 🛠 buttons next to DCodes, controller common names, and account names on jira.snapone.com that link into the Cool Ops tool.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://jira.snapone.com/*"],
+  "action": {
+    "default_title": "Cool Ops Jira Linker options",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": ["https://jira.snapone.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
