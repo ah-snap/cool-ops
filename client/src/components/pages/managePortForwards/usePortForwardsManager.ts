@@ -11,6 +11,7 @@ import {
   type PortForwardSummary
 } from "../../../actions/portForwardActions.ts";
 import { SOCKET_BASE_URL } from "../../../config.ts";
+import { CREDENTIALS_MAX_AGE_HOURS, runStartupSequence, AWS_CREDENTIALS_FORWARD_ID } from "./startupSequence.ts";
 import { extractAwsSsoPrompt } from "./utils.ts";
 
 type PortForwardEvent = {
@@ -21,10 +22,6 @@ type PortForwardEvent = {
 };
 
 const MAX_VISIBLE_LOGS = 500;
-const AWS_CREDENTIALS_FORWARD_ID = "aws-credentials-refresh";
-const CREDENTIALS_MAX_AGE_HOURS = 8;
-const POLL_INTERVAL_MS = 1500;
-const MAX_WAIT_MS = 15 * 60 * 1000;
 
 export function usePortForwardsManager() {
   const socketRef = useRef<ReturnType<typeof io> | null>(null);
@@ -35,6 +32,16 @@ export function usePortForwardsManager() {
   const [error, setError] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<"start" | "restart" | "stop" | null>(null);
   const [startupBusy, setStartupBusy] = useState(false);
+  const [awsCredentialsFresh, setAwsCredentialsFresh] = useState<boolean | null>(null);
+
+  const refreshAwsCredentialsFreshness = async () => {
+    try {
+      const result = await fetchAwsCredentialsFreshness(CREDENTIALS_MAX_AGE_HOURS);
+      setAwsCredentialsFresh(result.isFresh);
+    } catch {
+      setAwsCredentialsFresh(null);
+    }
+  };
 
   const selectedForward = useMemo(
     () => forwards.find((forward) => forward.id === selectedId) ?? null,
@@ -58,6 +65,7 @@ export function usePortForwardsManager() {
       try {
         const initialForwards = await fetchPortForwards();
         setForwards(initialForwards);
+        refreshAwsCredentialsFreshness();
 
         if (initialForwards.length > 0) {
           const firstId = initialForwards[0].id;
@@ -117,6 +125,14 @@ export function usePortForwardsManager() {
         return next;
       });
 
+      if (
+        event.id === AWS_CREDENTIALS_FORWARD_ID &&
+        event.type === "status" &&
+        (event.state.status === "success" || event.state.status === "error")
+      ) {
+        refreshAwsCredentialsFreshness();
+      }
+
       if (event.type === "log" && event.entry) {
         const entry = event.entry;
         setLogsById((current) => {
@@ -156,6 +172,10 @@ export function usePortForwardsManager() {
       return;
     }
 
+    await performActionOnForward(selectedForward.id, action);
+  };
+
+  const performActionOnForward = async (id: string, action: "start" | "restart" | "stop") => {
     setBusyAction(action);
     setError(null);
 
@@ -163,11 +183,11 @@ export function usePortForwardsManager() {
       let result: PortForwardSummary;
 
       if (action === "start") {
-        result = await startPortForward(selectedForward.id);
+        result = await startPortForward(id);
       } else if (action === "restart") {
-        result = await restartPortForward(selectedForward.id);
+        result = await restartPortForward(id);
       } else {
-        result = await stopPortForward(selectedForward.id);
+        result = await stopPortForward(id);
       }
 
       setForwards((current) => current.map((item) => (item.id === result.id ? result : item)));
@@ -220,80 +240,17 @@ export function usePortForwardsManager() {
     }
   };
 
-  const waitForOneShotCompletion = async (id: string): Promise<PortForwardSummary> => {
-    const startedAt = Date.now();
-
-    while (Date.now() - startedAt < MAX_WAIT_MS) {
-      const latestForwards = await fetchPortForwards();
-      setForwards(latestForwards);
-
-      const summary = latestForwards.find((forward) => forward.id === id);
-      if (!summary) {
-        throw new Error(`Missing command state for ${id}.`);
-      }
-
-      if (summary.status === "success") {
-        return summary;
-      }
-
-      if (summary.status === "error") {
-        throw new Error(`${summary.name} failed. Check logs for details.`);
-      }
-
-      await new Promise<void>((resolve) => {
-        window.setTimeout(() => resolve(), POLL_INTERVAL_MS);
-      });
-    }
-
-    throw new Error("Timed out waiting for AWS credentials update to finish.");
-  };
-
   const handleStartupSequence = async () => {
     setStartupBusy(true);
     setError(null);
 
     try {
-      const freshness = await fetchAwsCredentialsFreshness(CREDENTIALS_MAX_AGE_HOURS);
-      let currentForwards = await fetchPortForwards();
-      setForwards(currentForwards);
-
-      const credentialsJob = currentForwards.find((forward) => forward.id === AWS_CREDENTIALS_FORWARD_ID);
-      if (!credentialsJob) {
-        throw new Error("Missing Update AWS Credentials command.");
-      }
-
-      if (!freshness.isFresh) {
-        if (credentialsJob.status !== "running" && credentialsJob.status !== "starting") {
-          await startPortForward(AWS_CREDENTIALS_FORWARD_ID);
-        }
-
-        await waitForOneShotCompletion(AWS_CREDENTIALS_FORWARD_ID);
-        currentForwards = await fetchPortForwards();
-        setForwards(currentForwards);
-      }
-
-      for (const forward of currentForwards) {
-        if (forward.id === AWS_CREDENTIALS_FORWARD_ID) {
-          continue;
-        }
-
-        if (forward.runMode !== "persistent") {
-          continue;
-        }
-
-        if (forward.status === "running" || forward.status === "starting") {
-          continue;
-        }
-
-        await startPortForward(forward.id);
-      }
-
-      const refreshed = await fetchPortForwards();
-      setForwards(refreshed);
+      await runStartupSequence({ onForwardsChange: setForwards });
     } catch (err) {
       setError((err as Error).message || "Failed startup sequence.");
     } finally {
       setStartupBusy(false);
+      refreshAwsCredentialsFreshness();
     }
   };
 
@@ -303,12 +260,14 @@ export function usePortForwardsManager() {
     selectedForward,
     visibleLogs,
     awsSsoPrompt,
+    awsCredentialsFresh,
     loading,
     error,
     busyAction,
     startupBusy,
     setSelectedId,
     performAction,
+    performActionOnForward,
     handleAwsSsoAssist,
     handleStartupSequence
   };

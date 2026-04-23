@@ -1,5 +1,6 @@
 import '../../../stylesheets/navigation.css';
 import NavigationLink from './NavigationLink';
+import PortForwardsStatusIndicator from './PortForwardsStatusIndicator.tsx';
 
 function NavigationBar() {
   return (
@@ -16,6 +17,7 @@ function NavigationBar() {
           <NavigationLink to={'/bulkWhiteLabelAssist'}>Bulk White Label Assist</NavigationLink>
           <NavigationLink to={'/bulkRevokeLicenses'}>Bulk Revoke Licenses</NavigationLink>
           <NavigationLink to={'/managePortForwards'}>Manage Port Forwards</NavigationLink>
+          <PortForwardsStatusIndicator />
         </ul>
       </div>
     </div>
