@@ -47,7 +47,9 @@ function MainPage() {
           <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/mapping" element={<MappingPage />} />
+              <Route path="/mapping/:commonNameOrMac" element={<MappingPage />} />
               <Route path="/licenses" element={<MissingLicensePage />} />
+              <Route path="/licenses/:commonNameOrMac" element={<MissingLicensePage />} />
               <Route path="/showroomDemoLicenses" element={<ShowroomDemoLicensesPage />} />
               <Route path="/customerMapping" element={<DCodeValidationPage />} />
               <Route path="/pspLookup" element={<PSPLookup />} />
@@ -56,6 +58,7 @@ function MainPage() {
               <Route path="/bulkRevokeLicenses" element={<BulkRevokeLicensePage />} />
               <Route path="/managePortForwards" element={<ManagePortForwardsPage />} />
               <Route path="/dealer" element={<DealerPage />} />
+              <Route path="/dealer/:dCode" element={<DealerPage />} />
               <Route path="licenseDetails/:type/:value" element={<LicenseDetailsPage />} />
               <Route path="/licenseDetails/:type/:value" element={<LicenseDetailsPage />} />
             </Routes>

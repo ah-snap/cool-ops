@@ -50,3 +50,18 @@ export async function updateAccountType(req: Request<{ accountName: string; }, u
         console.log(err)
     }
 }
+
+export async function patchAccount(req: Request<{ accountName: string; }, unknown, unknown>, res: Response) {
+    console.log("Patching Account", req.params, req.body)
+
+    const { accountName } = req.params;
+    try {
+        const result = await service.patchAccount({ accountName, patch: req.body });
+
+        console.log("Result", result);
+        res.send(result);
+    } catch (err) {
+        sendApiError(res, err);
+        console.log(err)
+    }
+}

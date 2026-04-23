@@ -1,6 +1,6 @@
 import sql from "mssql";
 import * as queries from "./queries.js"
-import type { CreateLegacyAccountInput, CreateLegacyAccountResultRow, MarkAccountAsConnectInput, UpdateAccountTypeInput } from "./dtos.js";
+import type { AccountPatch, CreateLegacyAccountInput, CreateLegacyAccountResultRow, MarkAccountAsConnectInput, UpdateAccountTypeInput, UpdateConnectTierInput } from "./dtos.js";
 
 export async function createLegacyAccount({ accountName, firstName, lastName, email, address, city, state, postalCode, phone, country, companyName }: CreateLegacyAccountInput): Promise<CreateLegacyAccountResultRow[]> {
     const query = queries.createLegacyAccount;
@@ -45,4 +45,25 @@ export async function updateAccountType({ accountName, newType }: UpdateAccountT
     const result = await request.query(query);
     console.log("Update Account Type Result", result);
     return result.recordset;
+}
+
+export async function updateConnectTier({ accountName, connectTier }: UpdateConnectTierInput): Promise<unknown[]> {
+    const query = queries.updateConnectTier;
+
+    const request = new sql.Request();
+    request.input('accontName', sql.VarChar(25), accountName);
+    request.input('connectTier', sql.VarChar(50), connectTier);
+
+    const result = await request.query(query);
+    console.log("Update Connect Tier Result", result);
+    return result.recordset;
+}
+
+export async function patchAccount({ accountName, patch }: { accountName: string; patch: AccountPatch }): Promise<void> {
+    if (patch.accountType !== undefined) {
+        await updateAccountType({ accountName, newType: patch.accountType });
+    }
+    if (patch.connectTier !== undefined) {
+        await updateConnectTier({ accountName, connectTier: patch.connectTier });
+    }
 }

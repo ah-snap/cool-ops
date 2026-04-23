@@ -74,3 +74,10 @@ SET ovrc_created = CASE WHEN @accountType = 'Connect' THEN 1 ELSE 0 END,
     no_connect = CASE WHEN @accountType = 'Legacy' THEN 1 ELSE 0 END,
     legacy_connect_upgrade = 0
 WHERE Name = @accontName`
+
+export const updateConnectTier = `
+UPDATE C
+SET C.connect_tier = @connectTier
+FROM Security_16..Consumer C
+INNER JOIN Security_16..Account A ON A.Id = C.AccountId
+WHERE A.Name = @accontName`

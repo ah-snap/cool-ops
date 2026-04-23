@@ -1,4 +1,5 @@
-import { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import MappingDisplay from "../../MappingDisplay.tsx";
 import { LicenseData, Mapping, ServerError } from "../../../types.t";
 import AddMissingLicenseGrid from "../../AddMissingLicenseGrid.tsx";
@@ -31,12 +32,15 @@ function handleLicenseData(value: LicenseData[] | ServerError | null, setLicense
 }
 
 export default function MissingLicensePage() {
-  const [commonNameOrMac, setCommonNameOrMac] = useState<string>("");
-  const [enableButton, setEnableButton] = useState<boolean>(false);
+  const { commonNameOrMac: routeCommonNameOrMac } = useParams<{ commonNameOrMac?: string }>();
+  const navigate = useNavigate();
+  const [commonNameOrMac, setCommonNameOrMac] = useState<string>(routeCommonNameOrMac ?? "");
+  const [enableButton, setEnableButton] = useState<boolean>(Boolean(routeCommonNameOrMac));
   const [mapping, setMapping] = useState<Mapping | null>(null);
   const [licenseData, setLicenseData] = useState<LicenseData[] | null>(null);
   const [psp, setPsp] = useState<string | null>(null);
   const [date, setDate] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const updateCommonName = (event: { target: { value: any } }) => {
     const value = event.target.value;
@@ -44,12 +48,12 @@ export default function MissingLicensePage() {
     setCommonNameOrMac(value);
   };
 
-  const attempt = async () => {
+  const runLookup = async (value: string) => {
     setMapping(null);
     setEnableButton(false);
     setLicenseData(null);
 
-    const nextMapping = await getAccountMappingByCommonNameOrMac(commonNameOrMac);
+    const nextMapping = await getAccountMappingByCommonNameOrMac(value);
     await handleAccountMapping(nextMapping, setMapping);
 
     if (!nextMapping || 'error' in nextMapping) {
@@ -63,6 +67,37 @@ export default function MissingLicensePage() {
     setEnableButton(true);
   };
 
+  const attempt = async () => {
+    const trimmed = commonNameOrMac.trim();
+    if (!trimmed) return;
+    if (trimmed !== commonNameOrMac) {
+      setCommonNameOrMac(trimmed);
+    }
+    const encoded = encodeURIComponent(trimmed);
+    if (routeCommonNameOrMac !== trimmed) {
+      navigate(`/licenses/${encoded}`, { replace: false });
+    }
+    await runLookup(trimmed);
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    attempt();
+  };
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const trimmed = routeCommonNameOrMac?.trim();
+    if (trimmed) {
+      setCommonNameOrMac(trimmed);
+      runLookup(trimmed);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeCommonNameOrMac]);
+
   const updateLicenses = async () => {
     setLicenseData(null);
     const licenses = await getLicensesForAccount(mapping?.Name ?? "");
@@ -71,15 +106,17 @@ export default function MissingLicensePage() {
 
   return <PageShell>
       <h1>Licenses</h1>
-      <label>
-        CommonName or Mac Address:
-        <input type="text" value={commonNameOrMac} onChange={updateCommonName} className="missingLicenseInput" />
-        <button disabled={!enableButton} onClick={attempt}>Attempt</button>
-      </label>
+      <form onSubmit={handleSubmit}>
+        <label>
+          CommonName or Mac Address:
+          <input ref={inputRef} type="text" value={commonNameOrMac} onChange={updateCommonName} className="missingLicenseInput" />
+          <button type="submit" disabled={!enableButton}>Attempt</button>
+        </label>
+      </form>
 
       <div className="missingLicenseSection">
         <h2>Mapping</h2>
-        {<MappingDisplay mapping={mapping} />}
+        {<MappingDisplay mapping={mapping} onRefresh={() => { const v = commonNameOrMac.trim(); if (v) runLookup(v); }} />}
       </div>
       <div className="missingLicenseSection">
         <h2>Licenses</h2>

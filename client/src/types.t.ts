@@ -23,6 +23,7 @@ export type Mapping = {
     is_domestic: boolean;
     DCodes?: string;
     firmwareVersion?: string;
+    connect_tier?: string | null;
     error?: any;
 }
 

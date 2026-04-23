@@ -1,18 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DealerInfo } from "../../../types.t";
 import * as dealerActions from "../../../actions/dealerActions.ts";
 import { isServerError } from "../../../actions/apiClient.ts";
 import PageShell from "../../common/layout/PageShell.tsx";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 export const DealerPage: React.FC = () => {
-    const [dCode, setDCode] = useState<string>("");
-    const [enableButton, setEnableButton] = useState<boolean>(false);
+    const { dCode: routeDCode } = useParams<{ dCode?: string }>();
+    const navigate = useNavigate();
+    const [dCode, setDCode] = useState<string>(routeDCode ?? "");
+    const [enableButton, setEnableButton] = useState<boolean>(Boolean(routeDCode));
     const [dealer, setDealer] = useState<DealerInfo | null>(null);
     const [freeConnectLicenses, setFreeConnectLicenses] = useState<string>("");
     const [saving, setSaving] = useState<boolean>(false);
+    const inputRef = useRef<HTMLInputElement | null>(null);
 
     const handleDCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
@@ -20,11 +23,11 @@ export const DealerPage: React.FC = () => {
         setEnableButton(value.length > 0);
     };
 
-    const lookup = async () => {
+    const runLookup = async (value: string) => {
         setDealer(null);
         setFreeConnectLicenses("");
         setEnableButton(false);
-        const result = await dealerActions.getDealerByDCode(dCode);
+        const result = await dealerActions.getDealerByDCode(value);
         setEnableButton(true);
         if (isServerError(result)) {
             alert(result.error);
@@ -33,6 +36,37 @@ export const DealerPage: React.FC = () => {
         setDealer(result);
         setFreeConnectLicenses(String(result.freeConnectLicenses ?? ""));
     };
+
+    const lookup = async () => {
+        const trimmed = dCode.trim();
+        if (!trimmed) return;
+        if (trimmed !== dCode) {
+            setDCode(trimmed);
+        }
+        const encoded = encodeURIComponent(trimmed);
+        if (routeDCode !== trimmed) {
+            navigate(`/dealer/${encoded}`, { replace: false });
+        }
+        await runLookup(trimmed);
+    };
+
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        lookup();
+    };
+
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, []);
+
+    useEffect(() => {
+        const trimmed = routeDCode?.trim();
+        if (trimmed) {
+            setDCode(trimmed);
+            runLookup(trimmed);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [routeDCode]);
 
     const saveFreeConnectLicenses = async () => {
         if (!dealer) return;
@@ -86,13 +120,16 @@ export const DealerPage: React.FC = () => {
             </div>
             <label>
                 DCode:
-                <input
-                    type="text"
-                    value={dCode}
-                    onChange={handleDCodeChange}
-                    style={{ marginLeft: 8, marginRight: 8, width: 180 }}
-                />
-                <button disabled={!enableButton} onClick={lookup}>Look Up</button>
+                <form onSubmit={handleSubmit} style={{ display: "inline" }}>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={dCode}
+                        onChange={handleDCodeChange}
+                        style={{ marginLeft: 8, marginRight: 8, width: 180 }}
+                    />
+                    <button type="submit" disabled={!enableButton}>Look Up</button>
+                </form>
             </label>
 
             {dealer && (

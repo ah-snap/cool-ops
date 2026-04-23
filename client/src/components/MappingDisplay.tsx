@@ -5,6 +5,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { GridColDef } from '@mui/x-data-grid';
 import { isServerError, parseApiResponse } from "../actions/apiClient.ts";
 import { apiUrl } from "../config.ts";
+import { CONNECT_TIER_VALUES, ConnectTier, patchAccount } from "../actions/accountActions.ts";
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 75 },
@@ -21,7 +22,12 @@ const columns: GridColDef[] = [
     { field: 'originalVersion', headerName: 'OS Version', width: 150 },
     { field: 'XBackwardsUser', headerName: 'X-Backwards-User', width: 400 },
     { field: 'stripeCustomerID', headerName: 'Stripe Customer ID', width: 200 },
-    { field: 'connect_tier', headerName: 'Connect Tier', width: 150 },
+    {
+        field: 'connect_tier',
+        headerName: 'Connect Tier',
+        width: 220,
+        renderCell: (params) => <ConnectTierCell mapping={params.row} />,
+    },
     { field: 'auth_token', headerName: 'Auth Token', width: 200 },
     { field: 'isTestPassword', headerName: 'Test Password', width: 150, type: 'boolean' },
     { field: 'splitKey', headerName: 'Split Key', width: 200 }
@@ -31,6 +37,7 @@ const columns: GridColDef[] = [
 type Row = Mapping & {
     Source: string;
     XBackwardsUser?: string;
+    onRefresh?: () => void;
 };
 
 function ExcludeAssist({ mapping }: { mapping: Row }) {
@@ -70,13 +77,76 @@ function ExcludeAssist({ mapping }: { mapping: Row }) {
         <button onClick={() => setEditing(false)}>Cancel</button>
     </div>;
 }
-const calculateC4Row = (mapping: Mapping): Row => {
+
+function ConnectTierCell({ mapping }: { mapping: Row }) {
+    const currentTier = (mapping.connect_tier ?? "") as string;
+    const [editing, setEditing] = useState(false);
+    const [newValue, setNewValue] = useState<string>(currentTier);
+    const [saving, setSaving] = useState(false);
+
+    // Connect Tier lives on the C4 Account (Consumer row), not the OvrC side.
+    const isEditable = mapping.Source === "C4" && Boolean(mapping.Name);
+
+    useEffect(() => {
+        if (!editing) {
+            setNewValue(currentTier);
+        }
+    }, [currentTier, editing]);
+
+    if (!isEditable) {
+        return <div>{currentTier}</div>;
+    }
+
+    if (!editing) {
+        return <div
+            style={{ cursor: "pointer", minHeight: 20 }}
+            title="Click to edit connect tier"
+            onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+        >
+            {currentTier || <em style={{ opacity: 0.6 }}>(unset)</em>}
+        </div>;
+    }
+
+    const submit = async () => {
+        setSaving(true);
+        // Treat empty string as explicit null so we can clear the column.
+        const patchValue = newValue === "" ? null : (newValue as ConnectTier);
+        const result = await patchAccount(mapping.Name, { connectTier: patchValue });
+        setSaving(false);
+
+        if (result && typeof result === "object" && "error" in result) {
+            alert((result as { error: string }).error);
+            return;
+        }
+
+        setEditing(false);
+        mapping.onRefresh?.();
+    };
+
+    return <div style={{ display: "flex", gap: 4, alignItems: "center" }} onClick={(e) => e.stopPropagation()}>
+        <select
+            value={newValue}
+            onChange={(e) => setNewValue(e.target.value)}
+            disabled={saving}
+            autoFocus
+        >
+            <option value="">(unset)</option>
+            {CONNECT_TIER_VALUES.map((tier) => (
+                <option key={tier} value={tier}>{tier}</option>
+            ))}
+        </select>
+        <button onClick={submit} disabled={saving}>{saving ? "..." : "Save"}</button>
+        <button onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
+    </div>;
+}
+const calculateC4Row = (mapping: Mapping, onRefresh?: () => void): Row => {
     return { 
         ...mapping,
         id: mapping?.id ?? 0,
         Source: "C4",
         XBackwardsUser: `{"userId": ${mapping.userId}, "accountId": ${mapping.accountId}, "internal": true}`,
-        dCode: mapping.DCodes ?? mapping.dCode
+        dCode: mapping.DCodes ?? mapping.dCode,
+        onRefresh,
     }
 }
 
@@ -94,15 +164,15 @@ const calculateOvrcRow = (mapping: Mapping): Row => {
 }
 
 
-const calculateRows = (mapping: Mapping | null): Row[] => {
+const calculateRows = (mapping: Mapping | null, onRefresh?: () => void): Row[] => {
     if (!mapping) {
         return [];
     }
 
-    return [calculateC4Row(mapping), calculateOvrcRow(mapping)];
+    return [calculateC4Row(mapping, onRefresh), calculateOvrcRow(mapping)];
 }
 
-export default function MappingDisplay({ mapping }: { mapping: Mapping | null }) {
+export default function MappingDisplay({ mapping, onRefresh }: { mapping: Mapping | null; onRefresh?: () => void }) {
     const [isShowingCopyFeedback, setIsShowingCopyFeedback] = useState(false);
     const copyFeedbackTimeoutRef = useRef<number | null>(null);
 
@@ -136,6 +206,11 @@ export default function MappingDisplay({ mapping }: { mapping: Mapping | null })
     });
 
       const handleOnCellClick = (params: GridCellParams) => {
+            // Skip copy behavior for cells that own their own interactions.
+            if (params.field === 'connect_tier' || params.field === 'excludeAssist') {
+                return;
+            }
+
             const cellValue = String(params.value);
 
             navigator.clipboard.writeText(cellValue)
@@ -151,7 +226,7 @@ export default function MappingDisplay({ mapping }: { mapping: Mapping | null })
 
     return <div style={{ width: '80vw', overflow: 'auto', cursor: isShowingCopyFeedback ? clipboardCursor : 'cell' }}>
         <ThemeProvider theme={darkTheme} >
-            <DataGrid rows={calculateRows(mapping)} columns={columns} autoHeight localeText={{ noRowsLabel: 'Loading mapping...' }} hideFooter
+            <DataGrid rows={calculateRows(mapping, onRefresh)} columns={columns} autoHeight localeText={{ noRowsLabel: 'Loading mapping...' }} hideFooter
                 initialState={{
                     columns: {
                         columnVisibilityModel: {
