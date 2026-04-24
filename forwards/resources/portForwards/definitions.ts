@@ -5,6 +5,13 @@ export type PortForwardDefinition = {
   command: string;
   args: string[];
   runMode?: "persistent" | "oneshot";
+  /**
+   * TCP ports this forward listens on locally. Before spawning the child
+   * process the manager will kill any orphaned processes holding these
+   * ports (e.g. from a previous forwards-server run whose child outlived
+   * the manager) so restarting doesn't fail with "address already in use".
+   */
+  listenPorts?: number[];
 };
 
 const mongoSshKeyPath = process.env.PORT_FORWARD_MONGO_SSH_KEY_PATH || `${process.env.HOME || "/root"}/.ssh/prodovrckey.pem`;
@@ -21,11 +28,14 @@ const ovrcProdSsmProfile = process.env.OVRC_PROD_SSM_PROFILE || "ovrc_prod_ssm";
 
 const security16Host = process.env.SECURITY16_FORWARDING_HOST || "localhost";
 const security16Port = process.env.SECURITY16_PORT || "1433";
+const security16InternalPort = process.env.SECURITY16_INTERNAL_PORT || "11433";
 
 const mongoLocalPort = process.env.PORT_FORWARD_MONGO_LOCAL_PORT || "9925";
+const mongoBindAddress = process.env.PORT_FORWARD_MONGO_BIND_ADDRESS || "127.0.0.1";
 
 const snowLocalPort = process.env.PORT_FORWARD_SNOWDB_LOCAL_PORT || "5433";
 const snowHost = process.env.SNOWDB_HOST || "localhost";
+const snowBindAddress = process.env.PORT_FORWARD_SNOWDB_BIND_ADDRESS || "127.0.0.1";
 const snowForwardUser = process.env.SNOWDB_FORWARD_USER || "";
 
 export const portForwardDefinitions: PortForwardDefinition[] = [
@@ -42,22 +52,11 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
     id: "security16-sql",
     name: "Security_16 SQL (1433)",
     description:
-      `AWS SSM port-forward to Security_16 SQL Server (${security16Host}:1433) using ${prodAccessProfile} profile.`,
-    command: "aws",
-    args: [
-      "ssm",
-      "start-session",
-      "--region",
-      "us-east-2",
-      "--target",
-      "i-03c11f3bcfd51b0d9",
-      "--document-name",
-      "AWS-StartPortForwardingSessionToRemoteHost",
-      "--parameters",
-      `host=${security16Host},portNumber=1433,localPortNumber=${security16Port}`,
-      "--profile",
-      prodAccessProfile
-    ]
+      `AWS SSM port-forward to Security_16 SQL Server (${security16Host}:1433) using ${prodAccessProfile} profile. ` +
+      `Relayed through socat so the forward is reachable on 0.0.0.0 (sibling containers + host publish).`,
+    command: "bash",
+    args: ["/app/resources/portForwards/scripts/startSecurity16Sql.sh"],
+    listenPorts: [Number(security16Port), Number(security16InternalPort)]
   },
   {
     id: "mongo-socks-9925",
@@ -79,8 +78,9 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
       "AddressFamily=inet",
       "ubuntu@localhost",
       "-D",
-      `127.0.0.1:${mongoLocalPort}`
-    ]
+      `${mongoBindAddress}:${mongoLocalPort}`
+    ],
+    listenPorts: [Number(mongoLocalPort)]
   },
   {
     id: "snowdb-postgres-5433",
@@ -99,9 +99,10 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
       "-o",
       "AddressFamily=inet",
       "-L",
-      `127.0.0.1:${snowLocalPort}:${snowHost}:5432`,
+      `${snowBindAddress}:${snowLocalPort}:${snowHost}:5432`,
       `${snowForwardUser}`
-    ]
+    ],
+    listenPorts: [Number(snowLocalPort)]
   },
   {
     id: "k8s-license-service-8061",
@@ -119,6 +120,7 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
       `${k8sLocalPort}:${k8sPodPort}`,
       `--kubeconfig=/root/.kube/config`,
       ...(k8sContext ? [`--context=${k8sContext}`] : [])
-    ]
+    ],
+    listenPorts: [Number(k8sLocalPort)]
   }
 ];

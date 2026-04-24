@@ -12,10 +12,15 @@
  *     "Controller Common Name: <token>"    -> /licenses/{token}
  *     "Account Name: <token>"              -> /licenses/{token}
  *       (also catches "my.Control4 Account Name: ..." since it contains the label)
+ *     "Controller MAC Address: <token>"    -> /licenses/{token}
+ *       (also catches "Director / Controller MAC Address: ...")
  *
  *   Bare tokens (fallback for inline mentions):
  *     D + 4-8 digits                        -> /dealer/{token}
  *     Control4_<model>_<12 hex> (case-insensitive) -> /licenses/{token}
+ *     000FFF + 6 hex (case-insensitive)     -> /licenses/{token}
+ *     00:0F:FF:XX:XX:XX (case-insensitive)  -> /licenses/{token}
+ *     email address                         -> /users/{token}
  */
 
 const DEFAULT_BASE_URL = "http://localhost:5173";
@@ -54,6 +59,17 @@ const PATTERNS = [
     label: (match) => `Open account ${match[1]} in Cool Ops`,
     captureGroup: 1,
   },
+  {
+    name: "labeledControllerMacAddress",
+    kind: "labeled",
+    // "Controller MAC Address: 000FFFA1A378"
+    // Also catches "Director / Controller MAC Address: ..." because the label
+    // substring still appears in the text.
+    regex: /\bController MAC Address:\s*(\S+)/gi,
+    buildPath: (match) => `/licenses/${encodeURIComponent(match[1])}`,
+    label: (match) => `Open controller MAC ${match[1]} in Cool Ops`,
+    captureGroup: 1,
+  },
 
   // --- Bare tokens (for inline mentions outside the labeled rows) -----------
   {
@@ -71,6 +87,33 @@ const PATTERNS = [
     regex: /\bcontrol4_[A-Za-z0-9]+_[0-9A-Fa-f]{12}\b/gi,
     buildPath: (match) => `/licenses/${encodeURIComponent(match[0])}`,
     label: (match) => `Open account ${match[0]} in Cool Ops`,
+  },
+  {
+    name: "bareControl4Mac",
+    kind: "bare",
+    // 12 hex characters starting with 000FFF, no separators.
+    regex: /\b000FFF[0-9A-Fa-f]{6}\b/gi,
+    buildPath: (match) => `/licenses/${encodeURIComponent(match[0])}`,
+    label: (match) => `Open controller MAC ${match[0]} in Cool Ops`,
+  },
+  {
+    name: "bareControl4MacColon",
+    kind: "bare",
+    // Colon-separated form of the same: 00:0F:FF:XX:XX:XX (case-insensitive).
+    regex: /\b00:0F:FF(?::[0-9A-Fa-f]{2}){3}\b/gi,
+    buildPath: (match) => `/licenses/${encodeURIComponent(match[0])}`,
+    label: (match) => `Open controller MAC ${match[0]} in Cool Ops`,
+  },
+  {
+    name: "bareEmail",
+    kind: "bare",
+    // Simple, conservative email matcher — local@domain.tld with at least
+    // one dot in the domain. Good enough for the kinds of addresses that
+    // show up in Jira tickets without false-positive-ing on things like
+    // `user@example` or `@mention`.
+    regex: /\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/g,
+    buildPath: (match) => `/users/${encodeURIComponent(match[0])}`,
+    label: (match) => `Look up ${match[0]} in Cool Ops`,
   },
 ];
 
@@ -291,6 +334,55 @@ function scanSubtree(root) {
   }
   for (const node of nodes) {
     processTextNode(node);
+  }
+
+  // Pass 3: email anchors. Jira wraps email addresses in
+  // `<a href="mailto:...">`, which we intentionally skip in the text-node
+  // passes above to avoid nested <a>s. Instead, walk <a> elements and place
+  // the 🛠 button immediately after each one.
+  scanEmailAnchorsInSubtree(root);
+}
+
+const EMAIL_ANCHOR_DONE_ATTR = "data-cool-ops-email-anchor";
+const EMAIL_CORE_REGEX = /[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/;
+
+function extractEmail(raw) {
+  if (!raw) return null;
+  // Strip mailto: prefix and any ?subject=... / #frag fragments.
+  const withoutScheme = raw.replace(/^\s*mailto:/i, "").split(/[?#]/)[0];
+  // Strip trailing punctuation Jira / users occasionally append (`.`, `,`, `;`).
+  const trimmed = withoutScheme.replace(/[.,;)\]>\s]+$/g, "").trim();
+  const match = trimmed.match(EMAIL_CORE_REGEX);
+  return match ? match[0] : null;
+}
+
+function scanEmailAnchorsInSubtree(root) {
+  const anchors = [];
+  if (root.nodeType === Node.ELEMENT_NODE && root.tagName === "A") {
+    anchors.push(root);
+  }
+  if (root.nodeType === Node.ELEMENT_NODE) {
+    root.querySelectorAll("a").forEach((a) => anchors.push(a));
+  }
+
+  for (const anchor of anchors) {
+    if (anchor.hasAttribute(EMAIL_ANCHOR_DONE_ATTR)) continue;
+    if (anchor.classList?.contains(BUTTON_CLASS)) continue;
+
+    const href = anchor.getAttribute("href") || "";
+    const email =
+      (/^\s*mailto:/i.test(href) ? extractEmail(href) : null) ||
+      extractEmail(anchor.textContent || "");
+
+    if (!email) continue;
+
+    const button = makeButton({
+      href: buildUrl(`/users/${encodeURIComponent(email)}`),
+      label: `Look up ${email} in Cool Ops`,
+    });
+
+    anchor.insertAdjacentElement("afterend", button);
+    anchor.setAttribute(EMAIL_ANCHOR_DONE_ATTR, "1");
   }
 }
 

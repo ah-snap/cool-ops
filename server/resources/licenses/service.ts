@@ -47,7 +47,7 @@ interface InsertTransactionInput {
 }
 
 export async function insertLicense({ pool, oldPsp, psp, code, duration, consumerId, activationDate, expirationDate, subscriptionCodeBatchId, productId, appliedByUserId, revokedByAccountId, revocationDate, transactionId }: InsertLicenseInput): Promise<number> {
-        if (!pool) {
+    if (!pool) {
         pool = await security16.connect();
         console.log("Connected to security16");
     }
@@ -193,21 +193,19 @@ export function generateRandomCode() {
 
 export async function createLicense({oldPsp, newPsp}: { oldPsp?: string; newPsp: string; }) {
     console.log("Connecting to security16");
-    const pool = await security16.connect();
-    console.log("Connected");
-
-    if (oldPsp && newPsp) {
-        return await createLicenseFromFailedRenewal(pool, oldPsp, newPsp);
-    }
-
-    return await unmurder4Sight(newPsp);
+    return security16.withPool(async (pool) => {
+        console.log("Connected");
+        if (oldPsp && newPsp) {
+            return await createLicenseFromFailedRenewal(pool, oldPsp, newPsp);
+        }
+        return await unmurder4Sight(newPsp);
+    });
 }
 
 export async function getTransactionInformation({accountName, accountId}: { accountName?: string; accountId?: string | number; }): Promise<Array<LicenseTransactionRow & { expirationDateSnow?: Date | null; }>> {
-    await security16.connect();
-    console.log("Connected to security16");
-
-    const security16Result = await repository.getTransactionInformation({ accountName, accountId });
+    const security16Result = await security16.withPool(() =>
+        repository.getTransactionInformation({ accountName, accountId })
+    );
     console.log("Got result from security16", security16Result);
 
     if (!accountId) return security16Result;
@@ -229,26 +227,19 @@ export async function getTransactionInformation({accountName, accountId}: { acco
 
     
 
-    return await repository.getTransactionInformation({ accountName, accountId });
+    return await security16.withPool(() => repository.getTransactionInformation({ accountName, accountId }));
 }
 
 export async function getPotentiallyMissingPsp({psp, externalId}: { psp?: string; externalId?: string; }): Promise<PotentiallyMissingPspRow[]> {
-    await security16.connect();
-    console.log("Connected to security16");
-
-    return await repository.getPotentiallyMissingPsp({ psp, externalId });
+    return security16.withPool(() => repository.getPotentiallyMissingPsp({ psp, externalId }));
 }
 
 export async function updateLicense({ code, updates }: { code: string; updates: Record<string, string>; }) {
-    await security16.connect();
-    console.log("Connected to security16");
-    return await repository.updateLicense({ code, updates });
+    return security16.withPool(() => repository.updateLicense({ code, updates }));
 }
 
 export async function validateStripeEvents({ events }: { events: Array<{ id: string; created: number; }>; }): Promise<StripeValidationRow[] | null> {
-    await security16.connect();
-    console.log("Connected to security16");
-    return await repository.validateStripeEvents({ events });
+    return security16.withPool(() => repository.validateStripeEvents({ events }));
 }
 
 export async function retrieveStripeEvents(): Promise<StripeValidationRow[] | null> {
@@ -314,10 +305,7 @@ export async function insertSnowDbLicenseAndTransaction({ transaction_id, c4_use
 }
 
 export async function expireLicenses({ licenses }: { licenses: Array<{ code?: string | null; psp?: string | null; }>; }): Promise<ExpiredLicenseRow[] | null> {
-    await security16.connect();
-    console.log("Connected to security16");
-    
-    return await repository.expireLicenses({ licenses });
+    return security16.withPool(() => repository.expireLicenses({ licenses }));
 }
 
 function normalizePsp(psp: string): string {
@@ -349,12 +337,12 @@ function getPspHintsFromSecurityRows(
 }
 
 export async function getLicenseDetails(target: LicenseDetailsTargetInput): Promise<LicenseDetailsPayload> {
-    await security16.connect();
-
-    const [securitySubscriptionCodes, securityVendorTransactions] = await Promise.all([
-        repository.getSecuritySubscriptionCodeDetails(target),
-        repository.getSecurityVendorTransactionDetails(target),
-    ]);
+    const [securitySubscriptionCodes, securityVendorTransactions] = await security16.withPool(() =>
+        Promise.all([
+            repository.getSecuritySubscriptionCodeDetails(target),
+            repository.getSecurityVendorTransactionDetails(target),
+        ])
+    );
 
     const pspHints = getPspHintsFromSecurityRows(target, securitySubscriptionCodes, securityVendorTransactions);
     let snow = {
@@ -384,16 +372,16 @@ export async function revokeLicenseDetailsTarget(target: LicenseDetailsTargetInp
     security: { rowsAffected: number[]; };
     snow: { rowCount: number; };
 }> {
-    await security16.connect();
-
-    const [securitySubscriptionCodes, securityVendorTransactions] = await Promise.all([
-        repository.getSecuritySubscriptionCodeDetails(target),
-        repository.getSecurityVendorTransactionDetails(target),
-    ]);
+    const [securitySubscriptionCodes, securityVendorTransactions] = await security16.withPool(() =>
+        Promise.all([
+            repository.getSecuritySubscriptionCodeDetails(target),
+            repository.getSecurityVendorTransactionDetails(target),
+        ])
+    );
     const pspHints = getPspHintsFromSecurityRows(target, securitySubscriptionCodes, securityVendorTransactions);
 
     const [security, snow] = await Promise.all([
-        repository.revokeLicenseTarget(target),
+        security16.withPool(() => repository.revokeLicenseTarget(target)),
         snowdbRepository.revokeSnowLicenseTarget(pspHints),
     ]);
 
@@ -404,16 +392,16 @@ export async function deleteLicenseDetailsTarget(target: LicenseDetailsTargetInp
     security: { rowsAffected: number[]; };
     snow: { deletedSubscriptions: number; deletedTransactions: number; };
 }> {
-    await security16.connect();
-
-    const [securitySubscriptionCodes, securityVendorTransactions] = await Promise.all([
-        repository.getSecuritySubscriptionCodeDetails(target),
-        repository.getSecurityVendorTransactionDetails(target),
-    ]);
+    const [securitySubscriptionCodes, securityVendorTransactions] = await security16.withPool(() =>
+        Promise.all([
+            repository.getSecuritySubscriptionCodeDetails(target),
+            repository.getSecurityVendorTransactionDetails(target),
+        ])
+    );
     const pspHints = getPspHintsFromSecurityRows(target, securitySubscriptionCodes, securityVendorTransactions);
 
     const [security, snow] = await Promise.all([
-        repository.deleteLicenseTarget(target),
+        security16.withPool(() => repository.deleteLicenseTarget(target)),
         snowdbRepository.deleteSnowLicenseTarget(pspHints),
     ]);
 

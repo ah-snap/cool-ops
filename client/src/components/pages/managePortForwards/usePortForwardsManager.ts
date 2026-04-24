@@ -10,7 +10,7 @@ import {
   type PortForwardLogEntry,
   type PortForwardSummary
 } from "../../../actions/portForwardActions.ts";
-import { SOCKET_BASE_URL } from "../../../config.ts";
+import { FORWARDS_SOCKET_BASE_URL } from "../../../config.ts";
 import { CREDENTIALS_MAX_AGE_HOURS, runStartupSequence, AWS_CREDENTIALS_FORWARD_ID } from "./startupSequence.ts";
 import { extractAwsSsoPrompt } from "./utils.ts";
 
@@ -102,7 +102,7 @@ export function usePortForwardsManager() {
   }, [selectedId]);
 
   useEffect(() => {
-    const socket = io(SOCKET_BASE_URL, {
+    const socket = io(FORWARDS_SOCKET_BASE_URL, {
       transports: ["websocket"]
     });
     socketRef.current = socket;

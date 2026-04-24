@@ -1,10 +1,10 @@
 {
-  "name": "cool-ops-server-bun",
+  "name": "cool-ops-forwards",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bunx nodemon --legacy-watch --watch . --ext ts,json --exec \"bun index.ts\"",
+    "dev": "bunx nodemon --legacy-watch --watch . --ext ts,json,sh --exec \"bun index.ts\"",
     "start": "bun index.ts",
     "typecheck": "tsc --noEmit"
   },
@@ -13,12 +13,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.18.2",
-    "mongodb": "^6.15.0",
-    "mongoose": "^8.7.2",
-    "mssql": "^11.0.1",
-    "pg": "^8.17.2",
-    "socks": "^2.8.4",
-    "tunnel-ssh": "^5.1.2"
+    "socket.io": "^4.7.4"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.5",

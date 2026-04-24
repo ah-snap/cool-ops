@@ -1,5 +1,5 @@
 import '../../../stylesheets/navigation.css';
-import NavigationLink from './NavigationLink';
+import NavigationLink from './NavigationLink.tsx';
 import PortForwardsStatusIndicator from './PortForwardsStatusIndicator.tsx';
 
 function NavigationBar() {
@@ -12,10 +12,8 @@ function NavigationBar() {
           <NavigationLink to={'/mapping'}>Mapping</NavigationLink>
           <NavigationLink to={'/licenses'}>Licenses</NavigationLink>
           <NavigationLink to={'/dealer'}>Dealers</NavigationLink>
-          <NavigationLink to={'/pspLookup'}>PSP Lookup</NavigationLink>
-          <NavigationLink to={'/bulkMissingLicenses'}>Bulk Missing Licenses</NavigationLink>
-          <NavigationLink to={'/bulkWhiteLabelAssist'}>Bulk White Label Assist</NavigationLink>
-          <NavigationLink to={'/bulkRevokeLicenses'}>Bulk Revoke Licenses</NavigationLink>
+          <NavigationLink to={'/users'}>Users</NavigationLink>
+          <NavigationLink to={'/bulk'}>Bulk Updates</NavigationLink>
           <NavigationLink to={'/managePortForwards'}>Manage Port Forwards</NavigationLink>
           <PortForwardsStatusIndicator />
         </ul>

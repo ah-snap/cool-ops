@@ -1,8 +1,9 @@
 .portForwardsStatusIndicator {
-  height: 20px;
+  height: 18px;
   border-radius: 5px;
     display: inline-block;
     background-color: #666;
     border: 1px solid #aaa;
     padding-top: 13px;
+    margin-top: -15px;
 }
