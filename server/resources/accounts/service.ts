@@ -4,10 +4,7 @@ import type { AccountPatch, ConnectTier, CreateLegacyAccountResultRow } from "./
 import { CONNECT_TIER_VALUES } from "./dtos.js";
 
 export async function createLegacyAccount({ accountName, email }: { accountName: string; email: string; }): Promise<CreateLegacyAccountResultRow[]> {
-
-    await security16.connect();
-
-    return repository.createLegacyAccount({ 
+    return security16.withPool(() => repository.createLegacyAccount({
         accountName,
         firstName: "Legacy",
         lastName: "User",
@@ -18,26 +15,16 @@ export async function createLegacyAccount({ accountName, email }: { accountName:
         postalCode: "84404",
         phone: "801-111-1111",
         country: "US",
-        companyName: "" });
+        companyName: ""
+    }));
 }
 
 export async function markAccountAsConnect({ accountName }: { accountName: string; }): Promise<unknown[]> {
-
-    await security16.connect();
-
-    return repository.markAccountAsConnect({ 
-        accountName
-    });
+    return security16.withPool(() => repository.markAccountAsConnect({ accountName }));
 }
 
 export async function updateAccountType({ accountName, newType }: { accountName: string; newType: "Connect" | "Legacy" }): Promise<unknown[]> {
-
-    await security16.connect();
-
-    return repository.updateAccountType({
-        accountName,
-        newType
-    });
+    return security16.withPool(() => repository.updateAccountType({ accountName, newType }));
 }
 
 function isValidAccountType(value: unknown): value is "Connect" | "Legacy" {
@@ -76,8 +63,7 @@ export async function patchAccount({ accountName, patch }: { accountName: string
         throw new Error("No updatable fields provided. Supported fields: accountType, connectTier.");
     }
 
-    await security16.connect();
-    await repository.patchAccount({ accountName, patch: sanitized });
+    await security16.withPool(() => repository.patchAccount({ accountName, patch: sanitized }));
 
     return { updated: updatedFields };
 }

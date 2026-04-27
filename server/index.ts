@@ -5,9 +5,6 @@ import {router} from './routes/router.ts';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
-import { createServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
-import { configurePortForwardSockets } from './resources/portForwards/socket.ts';
 
 dotenv.config();
 app.use(cors());
@@ -24,16 +21,6 @@ app.use(function (req, res) {
 	res.json(err)
 });
 
-const httpServer = createServer(app);
-const io = new SocketIOServer(httpServer, {
-	cors: {
-		origin: '*',
-		methods: ['GET', 'POST']
-	}
-});
-
-configurePortForwardSockets(io);
-
-httpServer.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server listening on ${PORT}`);
 });

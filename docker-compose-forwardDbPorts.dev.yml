@@ -7,14 +7,40 @@ services:
     env_file:
       - ./.env
     environment:
-      security16Host: ${SECURITY16_HOST:-localhost}
+      security16Host: ${SECURITY16_HOST:-forwards}
       security16Port: ${SECURITY16_PORT:-1433}
+      PGHOST: ${PGHOST:-forwards}
+      PGPORT: ${PGPORT:-5433}
+      MONGO_PROXY_HOST: ${MONGO_PROXY_HOST:-forwards}
+      PORT: 3003
+      BUN_WATCH_USE_POLLING: "true"
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "500"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: bun run dev
+    volumes:
+      - ./server:/app
+      - api_node_modules:/app/node_modules
+    ports:
+      - "3003:3003"
+    depends_on:
+      - forwards
+    restart: unless-stopped
+
+  forwards:
+    build:
+      context: ./forwards
+      dockerfile: Dockerfile
+      target: dev
+    env_file:
+      - ./.env
+    environment:
       SECURITY16_FORWARDING_HOST: ${SECURITY16_FORWARDING_HOST:-localhost}
       SECURITY16_REMOTE_SQL_HOST: ${SECURITY16_REMOTE_SQL_HOST:-${SECURITY16_FORWARDING_HOST:-localhost}}
       SECURITY16_SSM_TARGET: ${SECURITY16_SSM_TARGET:-i-03c11f3bcfd51b0d9}
-      PGHOST: host.docker.internal
-      PGPORT: ${PGPORT:-5433}
-      PORT: 3003
+      PORT: 3004
       AWS_CONFIG_FILE: /root/.aws/config
       AWS_SHARED_CREDENTIALS_FILE: /root/.aws/credentials
       PORT_FORWARD_MONGO_BIND_ADDRESS: ${PORT_FORWARD_MONGO_BIND_ADDRESS:-0.0.0.0}
@@ -36,16 +62,17 @@ services:
       - "host.docker.internal:host-gateway"
     command: bun run dev
     volumes:
-      - ./server:/app
-      - api_node_modules:/app/node_modules
+      - ./forwards:/app
+      - forwards_node_modules:/app/node_modules
       - ${HOME:-${USERPROFILE}}/.aws:/root/.aws:rw
       - ./prodovrckey.pem:/run/keys/prodovrckey.pem:ro
       - ./snowdb.pem:/run/keys/snowdb.pem:ro
       - ${HOME:-${USERPROFILE}}/.kube:/root/.kube:ro
     ports:
-      - "3003:3003"
+      - "3004:3004"
       - "8061:8061"
       - "1433:1433"
+      - "5433:5433"
       - "9925:9925"
     restart: unless-stopped
 
@@ -60,6 +87,7 @@ services:
       - client_npm_cache:/root/.npm
     environment:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3003/api}
+      VITE_FORWARDS_BASE_URL: ${VITE_FORWARDS_BASE_URL:-http://localhost:3004/api}
       VITE_D365_BASE_URL: ${VITE_D365_BASE_URL:-http://localhost:8061}
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
@@ -67,9 +95,11 @@ services:
       - "5173:5173"
     depends_on:
       - api
+      - forwards
     restart: unless-stopped
 
 volumes:
   api_node_modules:
+  forwards_node_modules:
   client_node_modules:
   client_npm_cache:

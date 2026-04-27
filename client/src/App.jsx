@@ -5,7 +5,7 @@ import {
   Routes,
 } from "react-router-dom";
 
-const MainPage = lazy(() => import("./components/pages/MainPage"));
+const MainPage = lazy(() => import("./components/pages/MainPage.tsx"));
 
 function AppFallback() {
   return <div style={{ padding: 16 }}>Loading page...</div>;

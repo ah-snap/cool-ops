@@ -27,6 +27,7 @@ yarn-error.log*
 /snowdb.pem
 
 /server/node_modules
+/forwards/node_modules
 /client/node_modules
 /client/dist
 /client-vite/node_modules

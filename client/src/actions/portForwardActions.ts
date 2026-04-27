@@ -1,4 +1,4 @@
-import { apiUrl } from "../config.ts";
+import { forwardsUrl } from "../config.ts";
 import type { ServerError } from "../types.t";
 import { isServerError, parseApiResponse } from "./apiClient.ts";
 
@@ -46,25 +46,25 @@ function unwrapData<T>(value: { data: T } | ServerError): T {
 }
 
 export async function fetchPortForwards(): Promise<PortForwardSummary[]> {
-  const response = await fetch(apiUrl("/portForwards"));
+  const response = await fetch(forwardsUrl("/portForwards"));
   const data = await parseApiResponse<{ data: PortForwardSummary[] }>(response);
   return unwrapData(data);
 }
 
 export async function fetchPortForwardLogs(id: string, limit = 500): Promise<PortForwardLogEntry[]> {
-  const response = await fetch(apiUrl(`/portForwards/${id}/logs?limit=${limit}`));
+  const response = await fetch(forwardsUrl(`/portForwards/${id}/logs?limit=${limit}`));
   const data = await parseApiResponse<{ data: PortForwardLogEntry[] }>(response);
   return unwrapData(data);
 }
 
 export async function fetchAwsCredentialsFreshness(maxAgeHours = 8): Promise<AwsCredentialsFreshness> {
-  const response = await fetch(apiUrl(`/portForwards/aws-credentials/freshness?maxAgeHours=${maxAgeHours}`));
+  const response = await fetch(forwardsUrl(`/portForwards/aws-credentials/freshness?maxAgeHours=${maxAgeHours}`));
   const data = await parseApiResponse<{ data: AwsCredentialsFreshness }>(response);
   return unwrapData(data);
 }
 
 async function mutatePortForward(id: string, action: "start" | "restart" | "stop"): Promise<PortForwardSummary> {
-  const response = await fetch(apiUrl(`/portForwards/${id}/${action}`), {
+  const response = await fetch(forwardsUrl(`/portForwards/${id}/${action}`), {
     method: "POST"
   });
 

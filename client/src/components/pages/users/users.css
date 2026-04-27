@@ -1,0 +1,22 @@
+.usersInput {
+  width: 60ch;
+  max-width: 90%;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+.usersForm {
+  margin-bottom: 1rem;
+}
+
+.usersHint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+
+.usersGridWrapper {
+  width: 100%;
+  margin-top: 1rem;
+}

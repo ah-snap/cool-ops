@@ -89,6 +89,16 @@ export type ServerError = {
     details?: unknown;
 }
 
+export type UserRow = {
+    control4_email: string | null;
+    user_id: number | null;
+    splitKey: string | null;
+    certificateCommonName: string | null;
+    d_code: string | null;
+    ovrc_email: string | null;
+    isTestPassword: boolean | null;
+}
+
 export type DealerInfo = {
     accountNum: string;
     freeConnectLicenses: number;

@@ -6,14 +6,33 @@ services:
     env_file:
       - ./.env
     environment:
-      security16Host: ${SECURITY16_HOST:-localhost}
+      security16Host: ${SECURITY16_HOST:-forwards}
       security16Port: ${SECURITY16_PORT:-1433}
-      PGHOST: ${PGHOST:-host.docker.internal}
+      PGHOST: ${PGHOST:-forwards}
       PGPORT: ${PGPORT:-5433}
+      MONGO_PROXY_HOST: ${MONGO_PROXY_HOST:-forwards}
       PORT: 3003
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3003:3003"
+    depends_on:
+      - forwards
+    restart: unless-stopped
+
+  forwards:
+    build:
+      context: ./forwards
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    environment:
+      PORT: 3004
       AWS_CONFIG_FILE: /root/.aws/config
       AWS_SHARED_CREDENTIALS_FILE: /root/.aws/credentials
+      PORT_FORWARD_MONGO_BIND_ADDRESS: ${PORT_FORWARD_MONGO_BIND_ADDRESS:-0.0.0.0}
       PORT_FORWARD_MONGO_SSH_KEY_PATH: /run/keys/prodovrckey.pem
+      PORT_FORWARD_SNOWDB_BIND_ADDRESS: ${PORT_FORWARD_SNOWDB_BIND_ADDRESS:-0.0.0.0}
       PORT_FORWARD_SNOWDB_SSH_KEY_PATH: /run/keys/snowdb.pem
       PORT_FORWARD_K8S_CONTEXT: ${PORT_FORWARD_K8S_CONTEXT:-arn:aws:eks:us-east-2:367507620554:cluster/prod-cloud-services-green}
       PORT_FORWARD_K8S_NAMESPACE: boot-services
@@ -30,7 +49,7 @@ services:
       - ./snowdb.pem:/run/keys/snowdb.pem:ro
       - ${HOME:-${USERPROFILE}}/.kube:/root/.kube:ro
     ports:
-      - "3003:3003"
+      - "3004:3004"
       - "8061:8061"
     restart: unless-stopped
 
@@ -40,9 +59,11 @@ services:
       dockerfile: Dockerfile
       args:
         REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL:-http://localhost:3003/api}
+        REACT_APP_FORWARDS_BASE_URL: ${REACT_APP_FORWARDS_BASE_URL:-http://localhost:3004/api}
         REACT_APP_D365_BASE_URL: ${REACT_APP_D365_BASE_URL:-http://localhost:8061}
     ports:
       - "3000:80"
     depends_on:
       - api
+      - forwards
     restart: unless-stopped

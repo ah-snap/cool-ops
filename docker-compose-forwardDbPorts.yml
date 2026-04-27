@@ -6,14 +6,31 @@ services:
     env_file:
       - ./.env
     environment:
-      security16Host: ${SECURITY16_HOST:-localhost}
+      security16Host: ${SECURITY16_HOST:-forwards}
       security16Port: ${SECURITY16_PORT:-1433}
+      PGHOST: ${PGHOST:-forwards}
+      PGPORT: ${PGPORT:-5433}
+      MONGO_PROXY_HOST: ${MONGO_PROXY_HOST:-forwards}
+      PORT: 3003
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3003:3003"
+    depends_on:
+      - forwards
+    restart: unless-stopped
+
+  forwards:
+    build:
+      context: ./forwards
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    environment:
       SECURITY16_FORWARDING_HOST: ${SECURITY16_FORWARDING_HOST:-localhost}
       SECURITY16_REMOTE_SQL_HOST: ${SECURITY16_REMOTE_SQL_HOST:-${SECURITY16_FORWARDING_HOST:-localhost}}
       SECURITY16_SSM_TARGET: ${SECURITY16_SSM_TARGET:-i-03c11f3bcfd51b0d9}
-      PGHOST: ${PGHOST:-host.docker.internal}
-      PGPORT: ${PGPORT:-5433}
-      PORT: 3003
+      PORT: 3004
       AWS_CONFIG_FILE: /root/.aws/config
       AWS_SHARED_CREDENTIALS_FILE: /root/.aws/credentials
       PORT_FORWARD_MONGO_BIND_ADDRESS: ${PORT_FORWARD_MONGO_BIND_ADDRESS:-0.0.0.0}
@@ -35,9 +52,10 @@ services:
       - ./snowdb.pem:/run/keys/snowdb.pem:ro
       - ${HOME:-${USERPROFILE}}/.kube:/root/.kube:ro
     ports:
-      - "3003:3003"
+      - "3004:3004"
       - "8061:8061"
       - "1433:1433"
+      - "5433:5433"
       - "9925:9925"
     restart: unless-stopped
 
@@ -47,10 +65,12 @@ services:
       dockerfile: Dockerfile
       args:
         REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL:-http://localhost:3003/api}
+        REACT_APP_FORWARDS_BASE_URL: ${REACT_APP_FORWARDS_BASE_URL:-http://localhost:3004/api}
         REACT_APP_D365_BASE_URL: ${REACT_APP_D365_BASE_URL:-http://localhost:8061}
     ports:
       - "3000:80"
       - "5173:5173"
     depends_on:
       - api
+      - forwards
     restart: unless-stopped

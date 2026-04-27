@@ -7,14 +7,23 @@ function getMongoUri(): string {
         throw new Error("mongoConnectionString is not set");
     }
 
+    const override = process.env.MONGO_PROXY_HOST;
     const isContainer = existsSync("/.dockerenv");
-    if (!isContainer) {
+
+    if (!override && !isContainer) {
         return uri;
     }
 
     try {
         const parsed = new URL(uri);
-        if (parsed.searchParams.get("proxyHost") === "localhost") {
+        const currentProxyHost = parsed.searchParams.get("proxyHost");
+
+        if (override) {
+            parsed.searchParams.set("proxyHost", override);
+            return parsed.toString();
+        }
+
+        if (isContainer && currentProxyHost === "localhost") {
             parsed.searchParams.set("proxyHost", "127.0.0.1");
             return parsed.toString();
         }

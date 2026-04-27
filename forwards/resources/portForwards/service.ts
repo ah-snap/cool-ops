@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import { spawnSync } from "child_process";
 import type { ChildProcessWithoutNullStreams } from "child_process";
 import { copyFileSync, chmodSync, existsSync, statSync } from "fs";
 import { tmpdir } from "os";
@@ -77,6 +78,54 @@ function prepareArgsForExecution(command: string, args: string[]): string[] {
   } catch {
     return prepared;
   }
+}
+
+/**
+ * Kill any process currently listening on the given TCP port. Used as a
+ * preflight before spawning a port-forward child so that orphaned processes
+ * from a previous forwards-server run (whose manager died without cleaning
+ * up) don't cause "address already in use" errors on restart.
+ *
+ * Returns a short human-readable note describing what happened, or null if
+ * nothing was running on the port.
+ */
+function clearTcpPort(port: number): string | null {
+  if (!Number.isFinite(port) || port <= 0) {
+    return null;
+  }
+
+  // `fuser -k TERM` for a graceful shutdown, then a short pause and
+  // `fuser -k KILL` in case anything is still bound.
+  const tryKill = (signal: "TERM" | "KILL") => {
+    try {
+      const result = spawnSync("fuser", [`-${signal === "TERM" ? "15" : "9"}`, "-k", "-n", "tcp", String(port)], {
+        stdio: ["ignore", "pipe", "pipe"]
+      });
+      const stdout = (result.stdout?.toString("utf8") || "").trim();
+      const stderr = (result.stderr?.toString("utf8") || "").trim();
+      // fuser prints PIDs to stderr on some distros, stdout on others.
+      const combined = [stdout, stderr].filter(Boolean).join(" | ");
+      // Exit code 1 means "no process found" — not an error.
+      if (result.status === 0) {
+        return combined || `killed processes on tcp/${port}`;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const termNote = tryKill("TERM");
+  if (!termNote) {
+    return null;
+  }
+
+  // Give the kernel a moment to release the socket, then force-kill anything
+  // that's still around.
+  spawnSync("sleep", ["0.2"]);
+  tryKill("KILL");
+
+  return `Cleared stale listeners on tcp/${port} (${termNote}).`;
 }
 
 class PortForwardManager {
@@ -164,6 +213,18 @@ class PortForwardManager {
     state.lastStartedAt = new Date().toISOString();
     state.updatedAt = state.lastStartedAt;
     this.emitStatus(id);
+
+    // Free any orphaned listeners holding the ports we're about to bind.
+    // This covers the case where the forwards server was restarted but one
+    // of its children (ssh / kubectl / socat / session-manager-plugin) kept
+    // running and is still holding the TCP port.
+    const listenPorts = state.definition.listenPorts || [];
+    for (const port of listenPorts) {
+      const note = clearTcpPort(port);
+      if (note) {
+        this.appendLog(id, "system", note);
+      }
+    }
 
     this.appendLog(id, "system", `Starting command: ${state.definition.command} ${state.definition.args.join(" ")}`);
 
