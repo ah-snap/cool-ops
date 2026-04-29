@@ -70,6 +70,18 @@ const PATTERNS = [
     label: (match) => `Open controller MAC ${match[1]} in Cool Ops`,
     captureGroup: 1,
   },
+  {
+    name: "labeledController",
+    kind: "labeled",
+    // "Controller: control4_core3_000FFF9D4C73"
+    // The required colon directly after "Controller" means this won't fire on
+    // "Controller Common Name: ..." or "Controller MAC Address: ..." — those
+    // have their own dedicated patterns above.
+    regex: /\bController:\s*(\S+)/gi,
+    buildPath: (match) => `/licenses/${encodeURIComponent(match[1])}`,
+    label: (match) => `Open controller ${match[1]} in Cool Ops`,
+    captureGroup: 1,
+  },
 
   // --- Bare tokens (for inline mentions outside the labeled rows) -----------
   {
@@ -275,12 +287,31 @@ const SKIP_TAGS = new Set([
   "A", // don't inject inside existing links — avoid nested anchors
 ]);
 
+// CSS selector matching ancestors that represent transient UI like dropdown
+// menus, comboboxes, autocomplete suggestions, etc. We don't want to inject
+// 🛠 buttons inside those — e.g. Jira's assignee picker shows a list of users
+// and we'd otherwise stamp a wrench next to every email in the suggestions.
+const SKIP_ANCESTOR_SELECTOR = [
+  '[role="listbox"]',
+  '[role="option"]',
+  '[role="combobox"]',
+  '[role="menu"]',
+  '[role="menuitem"]',
+  '[role="tooltip"]',
+].join(",");
+
+function hasSkippedAncestor(el) {
+  if (!el || !el.closest) return false;
+  return Boolean(el.closest(SKIP_ANCESTOR_SELECTOR));
+}
+
 function shouldSkipElement(el) {
   if (!el) return true;
   if (SKIP_TAGS.has(el.tagName)) return true;
   if (el.isContentEditable) return true;
   if (el.classList?.contains(BUTTON_CLASS)) return true;
   if (el.hasAttribute?.(MARKER_ATTR)) return true;
+  if (hasSkippedAncestor(el)) return true;
   return false;
 }
 
@@ -368,6 +399,7 @@ function scanEmailAnchorsInSubtree(root) {
   for (const anchor of anchors) {
     if (anchor.hasAttribute(EMAIL_ANCHOR_DONE_ATTR)) continue;
     if (anchor.classList?.contains(BUTTON_CLASS)) continue;
+    if (hasSkippedAncestor(anchor)) continue;
 
     const href = anchor.getAttribute("href") || "";
     const email =
