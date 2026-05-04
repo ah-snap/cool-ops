@@ -208,12 +208,40 @@ export async function getTransactionInformation({accountName, accountId}: { acco
     );
     console.log("Got result from security16", security16Result);
 
-    if (!accountId) return security16Result;
+    // If no explicit accountId was provided, fall back to one carried on the
+    // security16 rows so we can still enrich with SnowDB data.
+    const effectiveAccountId: string | number | undefined =
+        accountId ?? security16Result.find(row => row.account_id != null)?.account_id;
+
+    console.log("Enriching licenses from SnowDB for accountId:", effectiveAccountId);
+
+    if (effectiveAccountId == null) return security16Result;
 
     try {
-        const snowResult = await snowdbRepository.getLicensesByAccountId({ accountId });
+        const snowResult = await snowdbRepository.getLicensesByAccountId({ accountId: effectiveAccountId });
+        console.log(`SnowDB returned ${snowResult.length} licenses`, snowResult);
+
+        // security16 transaction_ids carry a per-sku suffix (e.g.
+        // "MANUAL-API-A722577-Assist") while SnowDB typically stores the
+        // shared parent id ("MANUAL-API-A722577"). Allow either side to be
+        // a prefix of the other so the same snow row can light up multiple
+        // security16 rows when their skus match.
+        const txnIdsMatch = (a: string | null | undefined, b: string | null | undefined): boolean => {
+            if (!a || !b) return false;
+            return a.startsWith(b) || b.startsWith(a);
+        };
+
         return security16Result.map(license => {
-            const matchingSnowLicense = snowResult.find(snowLicense => license.transaction_id.startsWith(snowLicense.transactionid) && license.sku.toLowerCase() === snowLicense.sku.toLowerCase());
+            const matchingSnowLicense = snowResult.find(snowLicense =>
+                txnIdsMatch(license.transaction_id, snowLicense.transactionid)
+                && (license.sku || '').toLowerCase() === (snowLicense.sku || '').toLowerCase()
+            );
+            if (!matchingSnowLicense) {
+                console.log(
+                    `No SnowDB match for sec16 license`,
+                    { transaction_id: license.transaction_id, sku: license.sku }
+                );
+            }
             return {
                 ...license,
                 expirationDateSnow: matchingSnowLicense ? matchingSnowLicense.expirationdate : null,
@@ -224,10 +252,6 @@ export async function getTransactionInformation({accountName, accountId}: { acco
         console.error("Error fetching from SnowDB", err);
         return security16Result;
     }
-
-    
-
-    return await security16.withPool(() => repository.getTransactionInformation({ accountName, accountId }));
 }
 
 export async function getPotentiallyMissingPsp({psp, externalId}: { psp?: string; externalId?: string; }): Promise<PotentiallyMissingPspRow[]> {

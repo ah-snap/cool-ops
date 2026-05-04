@@ -19,6 +19,10 @@ const BulkRevokeLicensePage = lazy(() => import("./bulkRevokeLicenses/index.ts")
 const ManagePortForwardsPage = lazy(() => import("./managePortForwards/ManagePortForwardsPage.tsx"));
 const LicenseDetailsPage = lazy(() => import("./licenseDetails/LicenseDetailsPage.tsx"));
 const UsersPage = lazy(() => import("./users/index.ts"));
+const WhiteLabelAssistRequests = lazy(() => import("./whiteLabelAssistRequests/index.ts"));
+const WhiteLabelAssistRequestDetails = lazy(() =>
+    import("./whiteLabelAssistRequests/WhiteLabelAssistRequestDetails.tsx")
+);
 
 type OptionsMap = Record<string, unknown>;
 
@@ -52,6 +56,8 @@ function MainPage() {
                             <Route path="/users/:emailOrMac" element={<UsersPage />} />
                             <Route path="licenseDetails/:type/:value" element={<LicenseDetailsPage />} />
                             <Route path="/licenseDetails/:type/:value" element={<LicenseDetailsPage />} />
+                            <Route path="/whiteLabelAssistRequests" element={<WhiteLabelAssistRequests />} />
+                            <Route path="/whiteLabelAssistRequests/:id" element={<WhiteLabelAssistRequestDetails />} />
                         </Routes>
                     </Suspense>
                 </React.StrictMode>

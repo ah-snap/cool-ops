@@ -1,15 +1,27 @@
-Routes for existing pages /mapping/{commonNameOrMac}
-Start focus on search control
-Hitting enter on start textboxes should trigger the button
-Double check that I added the snow side into the license control (and not just into the assist white label page)
-UI elements on portforwards page button that indicates states of forwards 🔴🔵🟢 maybe, could add a ⏩ button to start all
+Page for looking up by user
+(security 16 user dealer/consumer or ovrc)
+
+Option to restart forwards on timeout
+
+Merge Mapping/Licenses into a new account page, maybe with subpages
+
+For Dealer, pull mapping information into page
+For dealer maybe move control for updating free connect licenses into grid
+
+On Mapping display
+Color hint on mismapping
+Order dcodes st ovrc one appears first
+
+Rework the add licenses control
+
+Move bulk pages into a single bulk updates page
+Add info on how to use page
+Link to documents
+Maybe pull data from documents rather than clipboard
 
 Forward DB ports to host machine so I don't have to forward them anymore
-Move forwards to separate image/service from the normal backend service
 
 Page for datastored generic queries
-
-UI to update connect_tier
 
 Potential extra infos for mapping:
     Invite history

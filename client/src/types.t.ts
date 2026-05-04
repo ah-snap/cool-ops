@@ -46,6 +46,7 @@ export type LicenseData = {
     ExpirationDate: string;
     Code: string;
     transaction_id: string;
+    expirationDateSnow?: string | null;
 }
 
 export type AddLicenseRow = {

@@ -4,11 +4,56 @@ import { GridColDef } from '@mui/x-data-grid';
 import { LicenseData } from '../types.t';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * Reduce a date-ish value to a YYYY-MM-DD key in UTC for comparison. Returns
+ * null when the value is empty or not parseable.
+ */
+function toDayKey(value: string | Date | null | undefined): string | null {
+    if (!value) return null;
+    const d = value instanceof Date ? value : new Date(value);
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString().slice(0, 10);
+}
+
 function buildColumns(navigate: ReturnType<typeof useNavigate>): GridColDef[] {
 return [
     { field: 'sku', headerName: 'SKU', width: 200 },
     { field: 'ActivationDate', headerName: 'Activation Date', width: 220 },
-    { field: 'ExpirationDate', headerName: 'Expiration Date', width: 220 },
+    {
+        field: 'ExpirationDate',
+        headerName: 'Expiration Date',
+        width: 240,
+        renderCell: (params) => {
+            const value = params.value as string | null | undefined;
+            const snow = (params.row as LicenseData).expirationDateSnow;
+            const display = value ? String(value) : '';
+
+            let marker: { color: string; title: string } | null = null;
+            if (snow) {
+                const sec16Day = toDayKey(value);
+                const snowDay = toDayKey(snow);
+                if (sec16Day && snowDay && sec16Day === snowDay) {
+                    marker = { color: '#4caf50', title: `SnowDB matches (${snow})` };
+                } else {
+                    marker = { color: '#f44336', title: `SnowDB differs: ${snow}` };
+                }
+            }
+
+            return (
+                <span>
+                    {display}
+                    {marker && (
+                        <sup
+                            title={marker.title}
+                            style={{ color: marker.color, marginLeft: 4, fontWeight: 600 }}
+                        >
+                            +1
+                        </sup>
+                    )}
+                </span>
+            );
+        },
+    },
     {
         field: 'Code',
         headerName: 'Code',

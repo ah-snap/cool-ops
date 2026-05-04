@@ -12,6 +12,46 @@ function getSubscriptionID(sku: string): string {
     return subscription_ids[translateSku(sku).toUpperCase()];
 }
 
+/**
+ * Normalizes whatever the user pasted into the date column to an ISO-ish
+ * timestamp string the downstream Snow / license APIs accept.
+ *
+ * Accepts inputs like:
+ *   - "2026-05-04"
+ *   - "5/4/2026"
+ *   - "5/4/2026 4:10:30 PM"
+ *   - "2026-05-04T16:10:30Z"
+ *
+ * If the input has no time component, noon local time is used (preserving
+ * the previous "<date> 12:00:00" behavior). If the input already has a
+ * time, that time is preserved instead of getting an extra "12:00:00"
+ * suffix appended (which produced `... 4:10:30 PM 12:00:00` and broke
+ * Postgres timestamptz parsing).
+ */
+function normalizeExpirationDate(raw: string): string {
+    const trimmed = (raw || "").trim();
+    if (!trimmed) {
+        throw new Error("Expiration date is required");
+    }
+
+    // Date-only forms: append noon and let the server treat as local.
+    const dateOnly = /^\d{4}-\d{1,2}-\d{1,2}$/.test(trimmed)
+        || /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(trimmed);
+    if (dateOnly) {
+        const d = new Date(`${trimmed} 12:00:00`);
+        if (isNaN(d.getTime())) {
+            throw new Error(`Unrecognized date: "${raw}"`);
+        }
+        return d.toISOString();
+    }
+
+    const parsed = new Date(trimmed);
+    if (isNaN(parsed.getTime())) {
+        throw new Error(`Unrecognized date: "${raw}"`);
+    }
+    return parsed.toISOString();
+}
+
 function calculateTransactionId(account: Mapping, sku: string): string {
     return `MANUAL-API-A${account.accountId}`;
 }
@@ -79,12 +119,21 @@ export async function process(row: { macOrCommonName: string; requestedExpiratio
     const account = await accountActions.getAccountMappingByCommonNameOrMac(row.macOrCommonName) as Mapping;
     if (!account || account.error) {
         console.error(`Account not found for row: ${JSON.stringify(row)}`);
+        updateStatus(`Account not found. ${JSON.stringify(row)}`);
         return;
     }
 
     console.log("Processing account:", account);
     updateStatus("Processing");
 
+    let expirationDate: string;
+    try {
+        expirationDate = normalizeExpirationDate(row.requestedExpirationDate);
+    } catch (err) {
+        console.error(err);
+        updateStatus(`Invalid expiration date: "${row.requestedExpirationDate}"`);
+        return;
+    }
 
     const transactionId = calculateTransactionId(account, row.sku);
 
@@ -104,7 +153,7 @@ export async function process(row: { macOrCommonName: string; requestedExpiratio
     if (licenses.length === 0) {
         updateStatus(`Found ${licenses.length} licenses. Creating new license...`);
 
-        await createLicense(transactionId, row.sku, row.requestedExpirationDate, account);
+        await createLicense(transactionId, row.sku, expirationDate, account);
     }
 
     updateStatus(`Updating licenses`);
@@ -115,22 +164,24 @@ export async function process(row: { macOrCommonName: string; requestedExpiratio
         }
         return [];
     })) {
-        console.log(`Updating expiration date for license code: ${license.Code} to ${row.requestedExpirationDate}`);
-        await updateExpirationDate(license.Code, `${row.requestedExpirationDate} 12:00:00`);
+        console.log(`Updating expiration date for license code: ${license.Code} to ${expirationDate}`);
+        await updateExpirationDate(license.Code, expirationDate);
     }
 
     updateStatus(`Updated licenses. Syncing to Snow...`);
 
-    await addLicenseToSnow({ 
+    const snowResult = await addLicenseToSnow({ 
         transactionId,
         c4_user_id: account.userId,
         skus: [translateSku(row.sku)],
         subscription_id: getSubscriptionID(row.sku),
         account_id: account.accountId,
         location_id: account.locationId,
-        expiration_date: `${row.requestedExpirationDate} 12:00:00`,
+        expiration_date: expirationDate,
         external_customer_id: account.d365CustomerID
     });
+
+    console.log("Result of Snow sync:", snowResult);
 
     updateStatus(`Completed`);
 }
