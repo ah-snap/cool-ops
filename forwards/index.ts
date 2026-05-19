@@ -23,23 +23,23 @@ apiRouter.use('/portForwards', portForwardsRouter);
 app.use('/api', apiRouter);
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'forwards' });
+    res.json({ status: 'ok', service: 'forwards' });
 });
 
 app.use(function (req, res) {
-  res.status(404).json({ error: 'Not Found' });
+    res.status(404).json({ error: 'Not Found' });
 });
 
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+    }
 });
 
 configurePortForwardSockets(io);
 
 httpServer.listen(PORT, () => {
-  console.log(`Forwards server listening on ${PORT}`);
+    console.log(`Forwards server listening on ${PORT}`);
 });

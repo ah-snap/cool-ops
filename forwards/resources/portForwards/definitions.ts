@@ -1,17 +1,17 @@
 export type PortForwardDefinition = {
-  id: string;
-  name: string;
-  description: string;
-  command: string;
-  args: string[];
-  runMode?: "persistent" | "oneshot";
-  /**
-   * TCP ports this forward listens on locally. Before spawning the child
-   * process the manager will kill any orphaned processes holding these
-   * ports (e.g. from a previous forwards-server run whose child outlived
-   * the manager) so restarting doesn't fail with "address already in use".
-   */
-  listenPorts?: number[];
+    id: string;
+    name: string;
+    description: string;
+    command: string;
+    args: string[];
+    runMode?: "persistent" | "oneshot";
+    /**
+     * TCP ports this forward listens on locally. Before spawning the child
+     * process the manager will kill any orphaned processes holding these
+     * ports (e.g. from a previous forwards-server run whose child outlived
+     * the manager) so restarting doesn't fail with "address already in use".
+     */
+    listenPorts?: number[];
 };
 
 const mongoSshKeyPath = process.env.PORT_FORWARD_MONGO_SSH_KEY_PATH || `${process.env.HOME || "/root"}/.ssh/prodovrckey.pem`;
@@ -39,88 +39,88 @@ const snowBindAddress = process.env.PORT_FORWARD_SNOWDB_BIND_ADDRESS || "127.0.0
 const snowForwardUser = process.env.SNOWDB_FORWARD_USER || "";
 
 export const portForwardDefinitions: PortForwardDefinition[] = [
-  {
-    id: "aws-credentials-refresh",
-    name: "Update AWS Credentials",
-    description:
-      "Runs AWS SSO credential refresh and updates shared ~/.aws/credentials profiles (one-shot).",
-    command: "bash",
-    args: ["/app/resources/portForwards/scripts/updateAwsCreds.sh"],
-    runMode: "oneshot"
-  },
-  {
-    id: "security16-sql",
-    name: "Security_16 SQL (1433)",
-    description:
-      `AWS SSM port-forward to Security_16 SQL Server (${security16Host}:1433) using ${prodAccessProfile} profile. ` +
-      `Relayed through socat so the forward is reachable on 0.0.0.0 (sibling containers + host publish).`,
-    command: "bash",
-    args: ["/app/resources/portForwards/scripts/startSecurity16Sql.sh"],
-    listenPorts: [Number(security16Port), Number(security16InternalPort)]
-  },
-  {
-    id: "mongo-socks-9925",
-    name: `Mongo SOCKS Proxy (${mongoLocalPort})`,
-    description:
-      `SSH dynamic SOCKS proxy on localhost:${mongoLocalPort} via AWS SSM jump host using ${ovrcProdSsmProfile} profile.`,
-    command: "ssh",
-    args: [
-      "-i",
-      mongoSshKeyPath,
-      "-N",
-      "-o",
-      `ProxyCommand=aws ssm start-session --target i-0225b0afc753aaf54 --profile ${ovrcProdSsmProfile} --document-name AWS-StartSSHSession --parameters portNumber=22 --region us-east-1`,
-      "-o",
-      "StrictHostKeyChecking=no",
-      "-o",
-      "UserKnownHostsFile=/dev/null",
-      "-o",
-      "AddressFamily=inet",
-      "ubuntu@localhost",
-      "-D",
-      `${mongoBindAddress}:${mongoLocalPort}`
-    ],
-    listenPorts: [Number(mongoLocalPort)]
-  },
-  {
-    id: "snowdb-postgres-5433",
-    name: `SnowDB Postgres (${snowLocalPort})`,
-    description:
-      `SSH local port-forward to SnowDB Postgres (${snowHost}:5432) on localhost:${snowLocalPort}.`,
-    command: "ssh",
-    args: [
-      "-i",
-      snowdbSshKeyPath,
-      "-N",
-      "-o",
-      "StrictHostKeyChecking=no",
-      "-o",
-      "UserKnownHostsFile=/dev/null",
-      "-o",
-      "AddressFamily=inet",
-      "-L",
-      `${snowBindAddress}:${snowLocalPort}:${snowHost}:5432`,
-      `${snowForwardUser}`
-    ],
-    listenPorts: [Number(snowLocalPort)]
-  },
-  {
-    id: "k8s-license-service-8061",
-    name: "Kubernetes License Service (8061)",
-    description:
-      "kubectl port-forward to cs-license-process-boot service (port 80 -> localhost:8061) in boot-services namespace on prod cluster.",
-    command: "kubectl",
-    args: [
-      "port-forward",
-      "-n",
-      k8sNamespace,
-      `svc/${k8sService}`,
-      "--address",
-      k8sAddress,
-      `${k8sLocalPort}:${k8sPodPort}`,
-      `--kubeconfig=/root/.kube/config`,
-      ...(k8sContext ? [`--context=${k8sContext}`] : [])
-    ],
-    listenPorts: [Number(k8sLocalPort)]
-  }
+    {
+        id: "aws-credentials-refresh",
+        name: "Update AWS Credentials",
+        description:
+            "Runs AWS SSO credential refresh and updates shared ~/.aws/credentials profiles (one-shot).",
+        command: "bash",
+        args: ["/app/resources/portForwards/scripts/updateAwsCreds.sh"],
+        runMode: "oneshot"
+    },
+    {
+        id: "security16-sql",
+        name: "Security_16 SQL (1433)",
+        description:
+            `AWS SSM port-forward to Security_16 SQL Server (${security16Host}:1433) using ${prodAccessProfile} profile. ` +
+            `Relayed through socat so the forward is reachable on 0.0.0.0 (sibling containers + host publish).`,
+        command: "bash",
+        args: ["/app/resources/portForwards/scripts/startSecurity16Sql.sh"],
+        listenPorts: [Number(security16Port), Number(security16InternalPort)]
+    },
+    {
+        id: "mongo-socks-9925",
+        name: `Mongo SOCKS Proxy (${mongoLocalPort})`,
+        description:
+            `SSH dynamic SOCKS proxy on localhost:${mongoLocalPort} via AWS SSM jump host using ${ovrcProdSsmProfile} profile.`,
+        command: "ssh",
+        args: [
+            "-i",
+            mongoSshKeyPath,
+            "-N",
+            "-o",
+            `ProxyCommand=aws ssm start-session --target i-0225b0afc753aaf54 --profile ${ovrcProdSsmProfile} --document-name AWS-StartSSHSession --parameters portNumber=22 --region us-east-1`,
+            "-o",
+            "StrictHostKeyChecking=no",
+            "-o",
+            "UserKnownHostsFile=/dev/null",
+            "-o",
+            "AddressFamily=inet",
+            "ubuntu@localhost",
+            "-D",
+            `${mongoBindAddress}:${mongoLocalPort}`
+        ],
+        listenPorts: [Number(mongoLocalPort)]
+    },
+    {
+        id: "snowdb-postgres-5433",
+        name: `SnowDB Postgres (${snowLocalPort})`,
+        description:
+            `SSH local port-forward to SnowDB Postgres (${snowHost}:5432) on localhost:${snowLocalPort}.`,
+        command: "ssh",
+        args: [
+            "-i",
+            snowdbSshKeyPath,
+            "-N",
+            "-o",
+            "StrictHostKeyChecking=no",
+            "-o",
+            "UserKnownHostsFile=/dev/null",
+            "-o",
+            "AddressFamily=inet",
+            "-L",
+            `${snowBindAddress}:${snowLocalPort}:${snowHost}:5432`,
+            `${snowForwardUser}`
+        ],
+        listenPorts: [Number(snowLocalPort)]
+    },
+    {
+        id: "k8s-license-service-8061",
+        name: "Kubernetes License Service (8061)",
+        description:
+            "kubectl port-forward to cs-license-process-boot service (port 80 -> localhost:8061) in boot-services namespace on prod cluster.",
+        command: "kubectl",
+        args: [
+            "port-forward",
+            "-n",
+            k8sNamespace,
+            `svc/${k8sService}`,
+            "--address",
+            k8sAddress,
+            `${k8sLocalPort}:${k8sPodPort}`,
+            `--kubeconfig=/root/.kube/config`,
+            ...(k8sContext ? [`--context=${k8sContext}`] : [])
+        ],
+        listenPorts: [Number(k8sLocalPort)]
+    }
 ];

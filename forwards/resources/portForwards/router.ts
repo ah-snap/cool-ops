@@ -1,11 +1,11 @@
 import { Router } from "express";
 import {
-  getAwsCredentialsFreshness,
-  getPortForwardLogs,
-  listPortForwards,
-  restartPortForward,
-  startPortForward,
-  stopPortForward
+    getAwsCredentialsFreshness,
+    getPortForwardLogs,
+    listPortForwards,
+    restartPortForward,
+    startPortForward,
+    stopPortForward
 } from "./controller.ts";
 
 export const portForwardsRouter = Router();
