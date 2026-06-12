@@ -6,8 +6,22 @@ import { GridColDef } from '@mui/x-data-grid';
 import { isServerError, parseApiResponse } from "../actions/apiClient.ts";
 import { apiUrl } from "../config.ts";
 import { CONNECT_TIER_VALUES, ConnectTier, patchAccount } from "../actions/accountActions.ts";
+import TestUserCell from "./testUser/TestUserCell.tsx";
 
 const columns: GridColDef[] = [
+    {
+        field: 'testUser',
+        headerName: 'Test User',
+        width: 260,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => (
+            <TestUserCell
+                targetAccountId={params.row.Source === "C4" ? params.row.accountId ?? null : null}
+                targetAccountName={params.row.Source === "C4" ? params.row.Name ?? null : null}
+            />
+        ),
+    },
     { field: 'id', headerName: 'ID', width: 75 },
     { field: 'Source', headerName: 'Source', width: 75 },
     { field: 'Name', headerName: '  Account Name', width: 230 },
@@ -207,7 +221,7 @@ export default function MappingDisplay({ mapping, onRefresh }: { mapping: Mappin
 
       const handleOnCellClick = (params: GridCellParams) => {
             // Skip copy behavior for cells that own their own interactions.
-            if (params.field === 'connect_tier' || params.field === 'excludeAssist') {
+            if (params.field === 'connect_tier' || params.field === 'excludeAssist' || params.field === 'testUser') {
                 return;
             }
 
@@ -236,7 +250,8 @@ export default function MappingDisplay({ mapping, onRefresh }: { mapping: Mappin
                             id: false,
                             auth_token: false,
                             isTestPassword: false,
-                            splitKey: false
+                            splitKey: false,
+                            testUser: false
                         },
                     },
                 }}

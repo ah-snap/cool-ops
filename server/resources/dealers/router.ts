@@ -3,5 +3,5 @@ import * as controller from "./controller.js";
 
 export const dealersRouter = Router();
 
-dealersRouter.route("/:dCode").get(controller.getDealerByDCode);
+dealersRouter.route("/").get(controller.getDealerByDCodeOrEmail);
 dealersRouter.route("/:dCode/freeConnectLicenses").put(controller.updateFreeConnectLicenses);

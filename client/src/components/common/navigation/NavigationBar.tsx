@@ -1,6 +1,7 @@
 import '../../../stylesheets/navigation.css';
 import NavigationLink from './NavigationLink.tsx';
 import PortForwardsStatusIndicator from './PortForwardsStatusIndicator.tsx';
+import TestUserActiveIndicator from './TestUserActiveIndicator.tsx';
 
 function NavigationBar() {
   return (
@@ -15,6 +16,7 @@ function NavigationBar() {
           <NavigationLink to={'/users'}>Users</NavigationLink>
           <NavigationLink to={'/bulk'}>Bulk Updates</NavigationLink>
           <NavigationLink to={'/managePortForwards'}>Manage Port Forwards</NavigationLink>
+          <TestUserActiveIndicator />
           <PortForwardsStatusIndicator />
         </ul>
       </div>

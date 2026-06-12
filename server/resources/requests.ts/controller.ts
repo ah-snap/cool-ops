@@ -8,8 +8,18 @@ export async function createWhiteLabelRequest(req: Request<unknown, unknown, { r
     console.log("Creating white label request", req.body);
     const { requestDate, sCode, licenseType, mac } = req.body;
 
+    let adjustedRequestDate = requestDate;
+    if (requestDate) {
+        const parsed = new Date(requestDate);
+        if (!Number.isNaN(parsed.getTime())) {
+            parsed.setFullYear(parsed.getFullYear() + 1);
+            parsed.setDate(parsed.getDate() + 7);
+            adjustedRequestDate = parsed.toISOString();
+        }
+    }
+
     try {
-        const result = await service.createWhiteLabelRequest({ requestDate, sCode, licenseType, mac });
+        const result = await service.createWhiteLabelRequest({ requestDate: adjustedRequestDate, sCode, licenseType, mac });
         console.log("Result", result);
 
         res.status(201).send(result);

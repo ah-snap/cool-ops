@@ -76,6 +76,21 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
             "UserKnownHostsFile=/dev/null",
             "-o",
             "AddressFamily=inet",
+            // Keepalive: probe the SSH peer every 30s; after 3 missed replies
+            // (~90s) the ssh process exits with non-zero status so the
+            // PortForwardManager can restart it. Without this a dead SSM/SSH
+            // session leaves the listener open but tunneling nothing, which
+            // causes the MongoDB driver to time out doing server selection
+            // ("Server selection timed out after ... ms") until forwards is
+            // restarted by hand.
+            "-o",
+            "ServerAliveInterval=30",
+            "-o",
+            "ServerAliveCountMax=3",
+            "-o",
+            "TCPKeepAlive=yes",
+            "-o",
+            "ExitOnForwardFailure=yes",
             "ubuntu@localhost",
             "-D",
             `${mongoBindAddress}:${mongoLocalPort}`
@@ -98,6 +113,15 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
             "UserKnownHostsFile=/dev/null",
             "-o",
             "AddressFamily=inet",
+            // See mongo-socks-9925 for rationale on these keepalive options.
+            "-o",
+            "ServerAliveInterval=30",
+            "-o",
+            "ServerAliveCountMax=3",
+            "-o",
+            "TCPKeepAlive=yes",
+            "-o",
+            "ExitOnForwardFailure=yes",
             "-L",
             `${snowBindAddress}:${snowLocalPort}:${snowHost}:5432`,
             `${snowForwardUser}`

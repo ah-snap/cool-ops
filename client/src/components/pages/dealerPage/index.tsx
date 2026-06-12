@@ -27,7 +27,7 @@ export const DealerPage: React.FC = () => {
         setDealer(null);
         setFreeConnectLicenses("");
         setEnableButton(false);
-        const result = await dealerActions.getDealerByDCode(value);
+        const result = await dealerActions.getDealerByDCodeOrEmail(value);
         setEnableButton(true);
         if (isServerError(result)) {
             alert(result.error);

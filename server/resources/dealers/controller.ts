@@ -2,14 +2,14 @@ import * as service from "./service.js";
 import type { Request, Response } from "express";
 import { sendApiError } from "../../common/apiResponses.js";
 
-export async function getDealerByDCode(req: Request<{ dCode: string }>, res: Response) {
-    console.log("Getting dealer by DCode", req.params);
+export async function getDealerByDCodeOrEmail(req: Request<{ dCode?: string, email?: string }>, res: Response) {
+    console.log("Getting dealer", req.query);
 
-    const { dCode } = req.params;
+    const { dCode, email } = req.query;
     try {
-        const result = await service.getDealerByDCode(dCode);
+        const result = await service.getDealerByDCodeOrEmail(dCode, email);
         if (!result) {
-            res.status(404).json({ error: `No dealer found for DCode: ${dCode}` });
+            res.status(404).json({ error: `No dealer found for ${dCode || email}` });
             return;
         }
         res.send(result);

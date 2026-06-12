@@ -8,6 +8,7 @@ import { adyenRouter } from '../resources/adyen/router.ts';
 import { dealersRouter } from '../resources/dealers/router.ts';
 import { usersRouter } from '../resources/users/router.ts';
 import { router as requestsRouter } from '../resources/requests.ts/router.ts';
+import { testUserRouter } from '../resources/testUser/router.ts';
 
 
 export const router = Router();
@@ -22,3 +23,4 @@ router.use('/adyen', adyenRouter);
 router.use('/dealers', dealersRouter);
 router.use('/users', usersRouter);
 router.use('/requests', requestsRouter);
+router.use('/testUser', testUserRouter);

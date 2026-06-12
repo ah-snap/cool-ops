@@ -97,7 +97,7 @@ export type UserRow = {
     certificateCommonName: string | null;
     d_code: string | null;
     ovrc_email: string | null;
-    isTestPassword: boolean | null;
+    isTestPassword: boolean;
 }
 
 export type DealerInfo = {

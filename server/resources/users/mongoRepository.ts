@@ -13,58 +13,59 @@ export async function getOwnersForDCodes(dCodes: string[]): Promise<OvrcOwnerFor
     const cleaned = Array.from(new Set(dCodes.filter((code): code is string => typeof code === "string" && code.length > 0)));
     if (cleaned.length === 0) return [];
 
-    const client = await ovrcMongo.connect();
-    const db = client.db("ovrcmain");
+    return ovrcMongo.withMongo(async (client) => {
+        const db = client.db("ovrcmain");
 
-    const cursor = db.collection("companies").aggregate<{
-        accountNum: string;
-        freeConnectLicenses?: number | null;
-        owner?: { username?: string | null };
-    }>([
-        { $match: { accountNum: { $in: cleaned } } },
-        {
-            $addFields: {
-                companyIdStr: { $toString: "$_id" }
-            }
-        },
-        {
-            $lookup: {
-                from: "users",
-                let: { cid: "$companyIdStr" },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ["$companyId", "$$cid"] },
-                                    { $eq: ["$isOwner", true] }
-                                ]
+        const cursor = db.collection("companies").aggregate<{
+            accountNum: string;
+            freeConnectLicenses?: number | null;
+            owner?: { username?: string | null };
+        }>([
+            { $match: { accountNum: { $in: cleaned } } },
+            {
+                $addFields: {
+                    companyIdStr: { $toString: "$_id" }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { cid: "$companyIdStr" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$companyId", "$$cid"] },
+                                        { $eq: ["$isOwner", true] }
+                                    ]
+                                }
                             }
-                        }
-                    },
-                    { $project: { username: 1, _id: 0 } },
-                    { $limit: 1 }
-                ],
-                as: "owner"
+                        },
+                        { $project: { username: 1, _id: 0 } },
+                        { $limit: 1 }
+                    ],
+                    as: "owner"
+                }
+            },
+            { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
+            {
+                $project: {
+                    _id: 0,
+                    accountNum: 1,
+                    freeConnectLicenses: 1,
+                    "owner.username": 1
+                }
             }
-        },
-        { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
-        {
-            $project: {
-                _id: 0,
-                accountNum: 1,
-                freeConnectLicenses: 1,
-                "owner.username": 1
-            }
-        }
-    ]);
+        ]);
 
-    const docs = await cursor.toArray();
-    return docs.map((doc) => ({
-        d_code: doc.accountNum,
-        ovrc_email: doc.owner?.username ?? null,
-        freeConnectLicenses: doc.freeConnectLicenses ?? null
-    }));
+        const docs = await cursor.toArray();
+        return docs.map((doc) => ({
+            d_code: doc.accountNum,
+            ovrc_email: doc.owner?.username ?? null,
+            freeConnectLicenses: doc.freeConnectLicenses ?? null
+        }));
+    });
 }
 
 /**
@@ -85,40 +86,41 @@ export async function findOvrcUsersByEmails(
     );
     if (cleaned.length === 0) return [];
 
-    const client = await ovrcMongo.connect();
-    const db = client.db("ovrcmain");
+    return ovrcMongo.withMongo(async (client) => {
+        const db = client.db("ovrcmain");
 
-    const cursor = db.collection("users").aggregate<{
-        username: string;
-        companyId?: string;
-        company?: { accountNum?: string | null };
-    }>([
-        { $match: { username: { $in: cleaned } } },
-        {
-            $lookup: {
-                from: "companies",
-                let: { cid: "$companyId" },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: [{ $toString: "$_id" }, "$$cid"]
+        const cursor = db.collection("users").aggregate<{
+            username: string;
+            companyId?: string;
+            company?: { accountNum?: string | null };
+        }>([
+            { $match: { username: { $in: cleaned } } },
+            {
+                $lookup: {
+                    from: "companies",
+                    let: { cid: "$companyId" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: [{ $toString: "$_id" }, "$$cid"]
+                                }
                             }
-                        }
-                    },
-                    { $project: { accountNum: 1, _id: 0 } },
-                    { $limit: 1 }
-                ],
-                as: "company"
-            }
-        },
-        { $unwind: { path: "$company", preserveNullAndEmptyArrays: true } },
-        { $project: { _id: 0, username: 1, "company.accountNum": 1 } }
-    ]);
+                        },
+                        { $project: { accountNum: 1, _id: 0 } },
+                        { $limit: 1 }
+                    ],
+                    as: "company"
+                }
+            },
+            { $unwind: { path: "$company", preserveNullAndEmptyArrays: true } },
+            { $project: { _id: 0, username: 1, "company.accountNum": 1 } }
+        ]);
 
-    const docs = await cursor.toArray();
-    return docs.map((doc) => ({
-        ovrc_email: doc.username,
-        d_code: doc.company?.accountNum ?? null
-    }));
+        const docs = await cursor.toArray();
+        return docs.map((doc) => ({
+            ovrc_email: doc.username,
+            d_code: doc.company?.accountNum ?? null
+        }));
+    });
 }

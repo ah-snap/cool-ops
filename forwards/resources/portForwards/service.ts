@@ -26,6 +26,21 @@ type PortForwardState = {
     errorMessage: string | null;
     updatedAt: string;
     logs: PortForwardLogEntry[];
+    /**
+     * Whether the most recent stop was initiated by the user (via stop() or
+     * restart()) as opposed to the child process exiting on its own. Used to
+     * decide whether a persistent forward should auto-restart.
+     */
+    manualStop: boolean;
+    /**
+     * Timer for a scheduled auto-restart, if any. Cleared on manual stop.
+     */
+    restartTimer: NodeJS.Timeout | null;
+    /**
+     * Count of consecutive unexpected exits, used to back off the auto-restart
+     * delay so a perpetually-failing forward doesn't spin in a tight loop.
+     */
+    consecutiveFailures: number;
 };
 
 type PortForwardEvent = {
@@ -147,7 +162,10 @@ class PortForwardManager {
                 exitCode: null,
                 errorMessage: null,
                 updatedAt: now,
-                logs: []
+                logs: [],
+                manualStop: false,
+                restartTimer: null,
+                consecutiveFailures: 0
             });
         });
     }
@@ -210,6 +228,11 @@ class PortForwardManager {
         state.status = "starting";
         state.exitCode = null;
         state.errorMessage = null;
+        state.manualStop = false;
+        if (state.restartTimer) {
+            clearTimeout(state.restartTimer);
+            state.restartTimer = null;
+        }
         state.lastStartedAt = new Date().toISOString();
         state.updatedAt = state.lastStartedAt;
         this.emitStatus(id);
@@ -277,6 +300,36 @@ class PortForwardManager {
             const codeLabel = code === null ? "unknown" : String(code);
             this.appendLog(id, "system", `Port-forward process exited with code ${codeLabel}.`);
             this.emitStatus(id);
+
+            // Auto-restart persistent forwards that exited on their own. This
+            // covers the common failure mode where the underlying SSH/SSM
+            // tunnel goes silent and the keepalive options in definitions.ts
+            // cause the ssh process to drop with a non-zero status. Without
+            // an auto-restart the listener stays down until someone restarts
+            // the whole forwards container.
+            if (runMode === "persistent" && !state.manualStop) {
+                state.consecutiveFailures += 1;
+                // 5s, 10s, 20s, 40s, capped at 60s.
+                const backoffMs = Math.min(60_000, 5_000 * Math.pow(2, state.consecutiveFailures - 1));
+                this.appendLog(
+                    id,
+                    "system",
+                    `Persistent forward exited unexpectedly; auto-restarting in ${Math.round(backoffMs / 1000)}s (failure ${state.consecutiveFailures}).`
+                );
+                state.restartTimer = setTimeout(() => {
+                    state.restartTimer = null;
+                    // Only restart if no one else has started it in the meantime.
+                    if (state.status === "stopped" || state.status === "error") {
+                        try {
+                            this.start(id);
+                        } catch (err) {
+                            this.appendLog(id, "system", `Auto-restart failed: ${(err as Error).message}`);
+                        }
+                    }
+                }, backoffMs);
+            } else if (code === 0) {
+                state.consecutiveFailures = 0;
+            }
         });
 
         return this.toSummary(state);
@@ -291,6 +344,13 @@ class PortForwardManager {
         const state = this.getState(id);
         const runMode = state.definition.runMode || "persistent";
         const processRef = this.processes.get(id);
+
+        state.manualStop = true;
+        state.consecutiveFailures = 0;
+        if (state.restartTimer) {
+            clearTimeout(state.restartTimer);
+            state.restartTimer = null;
+        }
 
         if (!processRef) {
             state.status = runMode === "oneshot" ? state.status : "stopped";
