@@ -135,16 +135,19 @@ export async function getLicensesByAccountId({ accountId }: { accountId: string 
     }
 }
 
+
 export async function getSnowLicenseDetails(pspHints: string[]): Promise<{
     systemSubscriptions: Record<string, unknown>[];
     systemSubscriptionTransactions: Record<string, unknown>[];
     subscriptions: Record<string, unknown>[];
+    subscriptionCodes: Record<string, unknown>[];
 }> {
     if (!pspHints.length) {
         return {
             systemSubscriptions: [],
             systemSubscriptionTransactions: [],
             subscriptions: [],
+            subscriptionCodes: [],
         };
     }
 
@@ -154,7 +157,7 @@ export async function getSnowLicenseDetails(pspHints: string[]): Promise<{
     try {
         await client.connect();
 
-        const [systemSubscriptionsResult, transactionsResult, subscriptionsResult] = await Promise.all([
+        const [systemSubscriptionsResult, transactionsResult, subscriptionsResult, subscriptionCodesResult] = await Promise.all([
             client.query(
                 `SELECT
                     ss.*,
@@ -190,12 +193,25 @@ export async function getSnowLicenseDetails(pspHints: string[]): Promise<{
                  ORDER BY s.subscription_id`,
                 params
             ),
+            client.query(
+                `SELECT DISTINCT
+                    sc.*
+                 FROM snow.subscription.system_subscription ss
+                 INNER JOIN snow.subscription.system_subscription_transaction sst
+                    ON sst.system_subscription_transaction_id = ss.system_subscription_transaction_id
+                 INNER JOIN snow.subscription.subscription_code sc
+                    ON sc.subscription_code_id = ss.subscription_code_id
+                 WHERE ${clause}
+                 ORDER BY sc.subscription_code_id`,
+                params
+            ),
         ]);
 
         return {
             systemSubscriptions: systemSubscriptionsResult.rows,
             systemSubscriptionTransactions: transactionsResult.rows,
             subscriptions: subscriptionsResult.rows,
+
         };
     } finally {
         await client.end();
@@ -268,6 +284,39 @@ export async function deleteSnowLicenseTarget(pspHints: string[]): Promise<{ del
     } catch (err) {
         await client.query("ROLLBACK");
         throw err;
+    } finally {
+        await client.end();
+    }
+}
+
+export async function updateSystemSubscriptionExpiration({ id, expirationDate }: { id: string; expirationDate: Date | null; }): Promise<{ rowCount: number; }> {
+    const client = createPgClient();
+    try {
+        await client.connect();
+        const result = await client.query(
+            `UPDATE snow.subscription.system_subscription
+             SET expiration_date = $2,
+                 modified_date = NOW()
+             WHERE system_subscription_id = $1`,
+            [id, expirationDate]
+        );
+        return { rowCount: result.rowCount || 0 };
+    } finally {
+        await client.end();
+    }
+}
+
+export async function updateSystemSubscriptionTransactionId({ id, transactionIdFromSource }: { id: string; transactionIdFromSource: string; }): Promise<{ rowCount: number; }> {
+    const client = createPgClient();
+    try {
+        await client.connect();
+        const result = await client.query(
+            `UPDATE snow.subscription.system_subscription_transaction
+             SET transaction_id_from_source = $2
+             WHERE system_subscription_transaction_id = $1`,
+            [id, transactionIdFromSource]
+        );
+        return { rowCount: result.rowCount || 0 };
     } finally {
         await client.end();
     }

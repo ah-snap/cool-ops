@@ -8,6 +8,12 @@ licensesRouter.route('/expire').post(controller.expireLicenses);
 licensesRouter.route('/details/:type/:value').get(controller.getLicenseDetails);
 licensesRouter.route('/details/:type/:value/revoke').post(controller.revokeLicenseDetailsTarget);
 licensesRouter.route('/details/:type/:value').delete(controller.deleteLicenseDetailsTarget);
+// Inline field updates from the License Details page. Registered before the
+// generic `/:code` PUT so they aren't shadowed.
+licensesRouter.route('/details/security/subscriptionCode/:id').patch(controller.updateSecuritySubscriptionCodeExpiration);
+licensesRouter.route('/details/security/vendorTransaction/:id').patch(controller.updateSecurityVendorTransactionId);
+licensesRouter.route('/details/snow/systemSubscription/:id').patch(controller.updateSnowSystemSubscriptionExpiration);
+licensesRouter.route('/details/snow/systemSubscriptionTransaction/:id').patch(controller.updateSnowSystemSubscriptionTransactionId);
 licensesRouter.route('/accounts/:accountId').get(controller.getLicensesByAccountId);
 licensesRouter.route('/stripeLicenses').get(controller.retrieveBatchOfStripeLicenses);
 licensesRouter.route('/snowLicenseAndTransaction').post(controller.insertSnowLicenseAndTransaction);

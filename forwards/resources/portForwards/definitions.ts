@@ -63,38 +63,50 @@ export const portForwardDefinitions: PortForwardDefinition[] = [
         name: `Mongo SOCKS Proxy (${mongoLocalPort})`,
         description:
             `SSH dynamic SOCKS proxy on localhost:${mongoLocalPort} via AWS SSM jump host using ${ovrcProdSsmProfile} profile.`,
-        command: "ssh",
+        command: "bash",
         args: [
+            "/app/resources/portForwards/scripts/aws-portforward.sh",
             "-i",
-            mongoSshKeyPath,
-            "-N",
-            "-o",
-            `ProxyCommand=aws ssm start-session --target i-0225b0afc753aaf54 --profile ${ovrcProdSsmProfile} --document-name AWS-StartSSHSession --parameters portNumber=22 --region us-east-1`,
-            "-o",
-            "StrictHostKeyChecking=no",
-            "-o",
-            "UserKnownHostsFile=/dev/null",
-            "-o",
-            "AddressFamily=inet",
-            // Keepalive: probe the SSH peer every 30s; after 3 missed replies
-            // (~90s) the ssh process exits with non-zero status so the
-            // PortForwardManager can restart it. Without this a dead SSM/SSH
-            // session leaves the listener open but tunneling nothing, which
-            // causes the MongoDB driver to time out doing server selection
-            // ("Server selection timed out after ... ms") until forwards is
-            // restarted by hand.
-            "-o",
-            "ServerAliveInterval=30",
-            "-o",
-            "ServerAliveCountMax=3",
-            "-o",
-            "TCPKeepAlive=yes",
-            "-o",
-            "ExitOnForwardFailure=yes",
-            "ubuntu@localhost",
-            "-D",
-            `${mongoBindAddress}:${mongoLocalPort}`
+            "prodschedule0",
+            "-p",
+            ovrcProdSsmProfile,
+            "-P",
+            22,
+            "-l",
+            mongoLocalPort,
         ],
+        // command: "ssh",
+        // args: [
+        //     "-i",
+        //     mongoSshKeyPath,
+        //     "-N",
+        //     "-o",
+        //     `ProxyCommand=aws ssm start-session --target prodschedule0 --profile ${ovrcProdSsmProfile} --document-name AWS-StartSSHSession --parameters portNumber=22 --region us-east-1`,
+        //     "-o",
+        //     "StrictHostKeyChecking=no",
+        //     "-o",
+        //     "UserKnownHostsFile=/dev/null",
+        //     "-o",
+        //     "AddressFamily=inet",
+        //     // Keepalive: probe the SSH peer every 30s; after 3 missed replies
+        //     // (~90s) the ssh process exits with non-zero status so the
+        //     // PortForwardManager can restart it. Without this a dead SSM/SSH
+        //     // session leaves the listener open but tunneling nothing, which
+        //     // causes the MongoDB driver to time out doing server selection
+        //     // ("Server selection timed out after ... ms") until forwards is
+        //     // restarted by hand.
+        //     "-o",
+        //     "ServerAliveInterval=30",
+        //     "-o",
+        //     "ServerAliveCountMax=3",
+        //     "-o",
+        //     "TCPKeepAlive=yes",
+        //     "-o",
+        //     "ExitOnForwardFailure=yes",
+        //     "ubuntu@localhost",
+        //     "-D",
+        //     `${mongoBindAddress}:${mongoLocalPort}`
+        // ],
         listenPorts: [Number(mongoLocalPort)]
     },
     {

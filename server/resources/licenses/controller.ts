@@ -224,3 +224,57 @@ export async function deleteLicenseDetailsTarget(req: Request<{ type: "code" | "
         console.log(err);
     }
 }
+
+// --- Inline field updates from the License Details page --------------------
+
+function isPositiveIntString(value: string): boolean {
+    return /^[0-9]+$/.test(value);
+}
+
+export async function updateSecuritySubscriptionCodeExpiration(req: Request<{ id: string; }, unknown, { expirationDate: string | null; }>, res: Response) {
+    const { id } = req.params;
+    if (!isPositiveIntString(id)) {
+        res.status(400).send({ error: `Invalid SubscriptionCode id: ${id}` });
+        return;
+    }
+    try {
+        const result = await service.updateSecuritySubscriptionCodeExpiration({ id, expirationDate: req.body?.expirationDate });
+        res.send(result);
+    } catch (err) {
+        sendApiError(res, err);
+    }
+}
+
+export async function updateSecurityVendorTransactionId(req: Request<{ id: string; }, unknown, { transactionId: string; }>, res: Response) {
+    const { id } = req.params;
+    if (!isPositiveIntString(id)) {
+        res.status(400).send({ error: `Invalid vendor_transaction id: ${id}` });
+        return;
+    }
+    try {
+        const result = await service.updateSecurityVendorTransactionId({ id, transactionId: req.body?.transactionId });
+        res.send(result);
+    } catch (err) {
+        sendApiError(res, err);
+    }
+}
+
+export async function updateSnowSystemSubscriptionExpiration(req: Request<{ id: string; }, unknown, { expirationDate: string | null; }>, res: Response) {
+    const { id } = req.params;
+    try {
+        const result = await service.updateSnowSystemSubscriptionExpiration({ id, expirationDate: req.body?.expirationDate });
+        res.send(result);
+    } catch (err) {
+        sendApiError(res, err);
+    }
+}
+
+export async function updateSnowSystemSubscriptionTransactionId(req: Request<{ id: string; }, unknown, { transactionIdFromSource: string; }>, res: Response) {
+    const { id } = req.params;
+    try {
+        const result = await service.updateSnowSystemSubscriptionTransactionId({ id, transactionIdFromSource: req.body?.transactionIdFromSource });
+        res.send(result);
+    } catch (err) {
+        sendApiError(res, err);
+    }
+}

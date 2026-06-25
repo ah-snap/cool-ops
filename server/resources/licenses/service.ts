@@ -431,3 +431,44 @@ export async function deleteLicenseDetailsTarget(target: LicenseDetailsTargetInp
 
     return { security, snow };
 }
+
+// --- Inline field updates from the License Details page --------------------
+// Each function validates its inputs and forwards to the corresponding
+// repository update. Kept narrow on purpose: callers from the UI can only
+// touch the specific fields exposed here, not arbitrary columns.
+
+function parseDateOrNull(value: unknown, field: string): Date | null {
+    if (value === null || value === undefined || value === "") return null;
+    const d = value instanceof Date ? value : new Date(String(value));
+    if (Number.isNaN(d.getTime())) {
+        throw new Error(`Invalid ${field}: ${String(value)}`);
+    }
+    return d;
+}
+
+function requireNonEmptyString(value: unknown, field: string): string {
+    if (typeof value !== "string" || value.trim() === "") {
+        throw new Error(`${field} must be a non-empty string`);
+    }
+    return value;
+}
+
+export async function updateSecuritySubscriptionCodeExpiration({ id, expirationDate }: { id: string; expirationDate: unknown; }) {
+    const parsed = parseDateOrNull(expirationDate, "expirationDate");
+    return security16.withPool(() => repository.updateSubscriptionCodeExpiration({ id, expirationDate: parsed }));
+}
+
+export async function updateSecurityVendorTransactionId({ id, transactionId }: { id: string; transactionId: unknown; }) {
+    const value = requireNonEmptyString(transactionId, "transactionId");
+    return security16.withPool(() => repository.updateVendorTransactionId({ id, transactionId: value }));
+}
+
+export async function updateSnowSystemSubscriptionExpiration({ id, expirationDate }: { id: string; expirationDate: unknown; }) {
+    const parsed = parseDateOrNull(expirationDate, "expirationDate");
+    return snowdbRepository.updateSystemSubscriptionExpiration({ id, expirationDate: parsed });
+}
+
+export async function updateSnowSystemSubscriptionTransactionId({ id, transactionIdFromSource }: { id: string; transactionIdFromSource: unknown; }) {
+    const value = requireNonEmptyString(transactionIdFromSource, "transactionIdFromSource");
+    return snowdbRepository.updateSystemSubscriptionTransactionId({ id, transactionIdFromSource: value });
+}

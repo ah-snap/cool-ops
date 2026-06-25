@@ -232,6 +232,30 @@ export async function updateLicense({ code, updates }: { code: string; updates: 
     return { rowsAffected: result.rowsAffected };
 }
 
+export async function updateSubscriptionCodeExpiration({ id, expirationDate }: { id: string; expirationDate: Date | null; }): Promise<{ rowsAffected: number[]; }> {
+    const request = new sql.Request();
+    request.input('id', sql.BigInt, id);
+    request.input('expirationDate', sql.DateTime, expirationDate);
+    const result = await request.query(`
+        UPDATE Security_16..SubscriptionCode
+        SET ExpirationDate = @expirationDate
+        WHERE Id = @id
+    `);
+    return { rowsAffected: result.rowsAffected };
+}
+
+export async function updateVendorTransactionId({ id, transactionId }: { id: string; transactionId: string; }): Promise<{ rowsAffected: number[]; }> {
+    const request = new sql.Request();
+    request.input('id', sql.BigInt, id);
+    request.input('transactionId', sql.VarChar(50), transactionId);
+    const result = await request.query(`
+        UPDATE Security_16..vendor_transaction
+        SET transaction_id = @transactionId
+        WHERE Id = @id
+    `);
+    return { rowsAffected: result.rowsAffected };
+}
+
 export async function validateStripeEvents({ events }: { events: Array<{ id: string; created: number; }>; }): Promise<StripeValidationRow[] | null> {
     console.log("Connected to security16");
 

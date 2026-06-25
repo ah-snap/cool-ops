@@ -114,3 +114,33 @@ export async function deleteLicenseDetailsTarget(type: LicenseDetailsTargetType,
     });
     return await parseApiResponse<LicenseDetailsActionResult>(response);
 }
+
+// --- Inline field updates from the License Details page --------------------
+
+export type SecurityUpdateResult = { rowsAffected: number[] };
+export type SnowUpdateResult = { rowCount: number };
+
+async function patchJson<T>(path: string, body: unknown): Promise<T | ServerError> {
+    const response = await fetch(apiUrl(path), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+    return await parseApiResponse<T>(response);
+}
+
+export function updateSecuritySubscriptionCodeExpiration(id: string, expirationDate: string | null): Promise<SecurityUpdateResult | ServerError> {
+    return patchJson(`/licenses/details/security/subscriptionCode/${encodeURIComponent(id)}`, { expirationDate });
+}
+
+export function updateSecurityVendorTransactionId(id: string, transactionId: string): Promise<SecurityUpdateResult | ServerError> {
+    return patchJson(`/licenses/details/security/vendorTransaction/${encodeURIComponent(id)}`, { transactionId });
+}
+
+export function updateSnowSystemSubscriptionExpiration(id: string, expirationDate: string | null): Promise<SnowUpdateResult | ServerError> {
+    return patchJson(`/licenses/details/snow/systemSubscription/${encodeURIComponent(id)}`, { expirationDate });
+}
+
+export function updateSnowSystemSubscriptionTransactionId(id: string, transactionIdFromSource: string): Promise<SnowUpdateResult | ServerError> {
+    return patchJson(`/licenses/details/snow/systemSubscriptionTransaction/${encodeURIComponent(id)}`, { transactionIdFromSource });
+}
