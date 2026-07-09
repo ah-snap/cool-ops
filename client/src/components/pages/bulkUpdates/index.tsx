@@ -9,6 +9,7 @@ export default function BulkUpdates() {
         <NavigationLink to="/bulkMissingLicenses">Bulk Missing Licenses</NavigationLink>
         <NavigationLink to="/bulkWhiteLabelAssist">Bulk White Label Assist</NavigationLink>
         <NavigationLink to="/whiteLabelAssistRequests">White Label Assist Requests</NavigationLink>
+        <NavigationLink to="/dataChangeRequests">Data Change Requests</NavigationLink>
         <NavigationLink to="/bulkRevokeLicenses">Bulk Revoke Licenses</NavigationLink>
       </ul>
     </div>

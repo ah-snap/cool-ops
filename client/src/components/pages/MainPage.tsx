@@ -23,6 +23,10 @@ const WhiteLabelAssistRequests = lazy(() => import("./whiteLabelAssistRequests/i
 const WhiteLabelAssistRequestDetails = lazy(() =>
     import("./whiteLabelAssistRequests/WhiteLabelAssistRequestDetails.tsx")
 );
+const DataChangeRequests = lazy(() => import("./dataChangeRequests/index.ts"));
+const DataChangeRequestDetails = lazy(() =>
+    import("./dataChangeRequests/DataChangeRequestDetails.tsx")
+);
 
 type OptionsMap = Record<string, unknown>;
 
@@ -58,6 +62,8 @@ function MainPage() {
                             <Route path="/licenseDetails/:type/:value" element={<LicenseDetailsPage />} />
                             <Route path="/whiteLabelAssistRequests" element={<WhiteLabelAssistRequests />} />
                             <Route path="/whiteLabelAssistRequests/:id" element={<WhiteLabelAssistRequestDetails />} />
+                            <Route path="/dataChangeRequests" element={<DataChangeRequests />} />
+                            <Route path="/dataChangeRequests/:id" element={<DataChangeRequestDetails />} />
                         </Routes>
                     </Suspense>
                 </React.StrictMode>

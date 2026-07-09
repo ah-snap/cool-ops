@@ -1,0 +1,114 @@
+.dcReqHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dcReqFilters {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin: 12px 0;
+    flex-wrap: wrap;
+}
+
+.dcReqCount {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.dcReqError {
+    color: #b00;
+    background: #fee;
+    border: 1px solid #fbb;
+    padding: 8px;
+    border-radius: 4px;
+    margin: 8px 0;
+}
+
+.dcReqGridWrapper {
+    margin-top: 8px;
+    width: 100%;
+}
+
+.dcReqStatusBadge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    text-transform: capitalize;
+}
+
+.dcReqStatus-Pending {
+    background: #fff4cc;
+    color: #8a6d00;
+}
+
+.dcReqStatus-Confirmed {
+    background: #d4f5d4;
+    color: #1b5e20;
+}
+
+.dcReqStatus-InProgress {
+    background: #cfe4ff;
+    color: #0d3b7d;
+}
+
+.dcReqStatus-Failed {
+    background: #fcd6d6;
+    color: #8a1010;
+}
+
+.dcReqStatus-Invalid {
+    background: #e0e0e0;
+    color: #555;
+}
+
+.dcReqValidYes {
+    color: #1b5e20;
+    font-weight: 600;
+}
+
+.dcReqValidNo {
+    color: #8a1010;
+    font-weight: 600;
+}
+
+.dcReqDetailGrid {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 12px;
+    align-items: center;
+    margin: 8px 0 16px;
+}
+
+.dcReqDetailGrid input,
+.dcReqDetailGrid textarea {
+    width: 380px;
+}
+
+.dcReqActions {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.dcReqLogBox {
+    margin-top: 16px;
+    padding: 8px;
+    background: #fafafa;
+    color: #333;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    font-family: monospace;
+    font-size: 0.85em;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.dcReqInvalidReason {
+    color: #8a1010;
+    font-size: 0.9em;
+    margin-left: 6px;
+}
