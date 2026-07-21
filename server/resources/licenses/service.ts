@@ -329,7 +329,34 @@ export async function insertSnowDbLicenseAndTransaction({ transaction_id, c4_use
 }
 
 export async function expireLicenses({ licenses }: { licenses: Array<{ code?: string | null; psp?: string | null; }>; }): Promise<ExpiredLicenseRow[] | null> {
-    return security16.withPool(() => repository.expireLicenses({ licenses }));
+    // Any PSPs supplied by the caller are enough to also expire the
+    // corresponding Snow rows. Codes-only entries have no cheap way to
+    // reach Snow, so we skip them on that side.
+    const pspHints = Array.from(new Set(
+        licenses
+            .map(l => l.psp)
+            .filter((psp): psp is string => !!psp)
+            .map(normalizePsp)
+    ));
+
+    const [securityResult, snowResult] = await Promise.all([
+        security16.withPool(() => repository.expireLicenses({ licenses })),
+        pspHints.length > 0
+            ? snowdbRepository.revokeSnowLicenseTarget(pspHints).catch(err => {
+                // Snow expire is best-effort — don't fail the whole request
+                // if Snow is unreachable; the security16 update still stands.
+                console.error("Error expiring Snow licenses", err);
+                return { rowCount: 0 };
+            })
+            : Promise.resolve({ rowCount: 0 }),
+    ]);
+
+    console.log(
+        `Expired ${snowResult.rowCount} Snow license row(s) for pspHints:`,
+        pspHints
+    );
+
+    return securityResult;
 }
 
 function normalizePsp(psp: string): string {

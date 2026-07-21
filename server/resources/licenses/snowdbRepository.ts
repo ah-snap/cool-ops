@@ -140,14 +140,12 @@ export async function getSnowLicenseDetails(pspHints: string[]): Promise<{
     systemSubscriptions: Record<string, unknown>[];
     systemSubscriptionTransactions: Record<string, unknown>[];
     subscriptions: Record<string, unknown>[];
-    subscriptionCodes: Record<string, unknown>[];
 }> {
     if (!pspHints.length) {
         return {
             systemSubscriptions: [],
             systemSubscriptionTransactions: [],
             subscriptions: [],
-            subscriptionCodes: [],
         };
     }
 
@@ -157,7 +155,7 @@ export async function getSnowLicenseDetails(pspHints: string[]): Promise<{
     try {
         await client.connect();
 
-        const [systemSubscriptionsResult, transactionsResult, subscriptionsResult, subscriptionCodesResult] = await Promise.all([
+        const [systemSubscriptionsResult, transactionsResult, subscriptionsResult] = await Promise.all([
             client.query(
                 `SELECT
                     ss.*,
@@ -193,25 +191,12 @@ export async function getSnowLicenseDetails(pspHints: string[]): Promise<{
                  ORDER BY s.subscription_id`,
                 params
             ),
-            client.query(
-                `SELECT DISTINCT
-                    sc.*
-                 FROM snow.subscription.system_subscription ss
-                 INNER JOIN snow.subscription.system_subscription_transaction sst
-                    ON sst.system_subscription_transaction_id = ss.system_subscription_transaction_id
-                 INNER JOIN snow.subscription.subscription_code sc
-                    ON sc.subscription_code_id = ss.subscription_code_id
-                 WHERE ${clause}
-                 ORDER BY sc.subscription_code_id`,
-                params
-            ),
         ]);
 
         return {
             systemSubscriptions: systemSubscriptionsResult.rows,
             systemSubscriptionTransactions: transactionsResult.rows,
             subscriptions: subscriptionsResult.rows,
-
         };
     } finally {
         await client.end();
