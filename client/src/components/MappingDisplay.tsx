@@ -153,6 +153,15 @@ function ConnectTierCell({ mapping }: { mapping: Row }) {
         <button onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
     </div>;
 }
+const resolveExcludeAssist = (automationAccounts: Mapping["automationAccounts"], locationId?: string | null): boolean => {
+    if (!automationAccounts || automationAccounts.length === 0) {
+        return false;
+    }
+
+    const match = automationAccounts.find(account => account.locationId === locationId);
+    return (match ?? automationAccounts[0]).excludeAssist ?? false;
+}
+
 const calculateC4Row = (mapping: Mapping, onRefresh?: () => void): Row => {
     return { 
         ...mapping,
@@ -160,6 +169,7 @@ const calculateC4Row = (mapping: Mapping, onRefresh?: () => void): Row => {
         Source: "C4",
         XBackwardsUser: `{"userId": ${mapping.userId}, "accountId": ${mapping.accountId}, "internal": true}`,
         dCode: mapping.DCodes ?? mapping.dCode,
+        excludeAssist: resolveExcludeAssist(mapping.automationAccounts, mapping.ovrc_location_id),
         onRefresh,
     }
 }
@@ -173,7 +183,8 @@ const calculateOvrcRow = (mapping: Mapping): Row => {
         ConnectStatus: mapping.automationAccounts ? "Mapped" : "Unmapped",
         dealerName: mapping.companyName,
         ovrc_location_id: mapping.locationId,
-        CertificateCommonName: mapping.mac
+        CertificateCommonName: mapping.mac,
+        excludeAssist: resolveExcludeAssist(mapping.automationAccounts, mapping.locationId),
     }
 }
 

@@ -17,6 +17,7 @@ export type Mapping = {
     automationAccounts?: Array<{
         accountName: string;
         excludeAssist: boolean;
+        locationId?: string;
     }>;
     originalVersion?: string;
     excludeAssist?: boolean;
