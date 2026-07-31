@@ -99,43 +99,77 @@ updateAwsCreds() {
     fi
 
     echo
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+
+    # 2. Launch credential fetching in parallel
+    for profile in "${profileValues[@]}"; do
+        # Run each iteration in a background subshell using ( ... ) &
+        (
+            IFS=',' read -r credName configname role accountId region <<< "$profile"
+
+            if [[ -z "${credName:-}" || -z "${configname:-}" || -z "${role:-}" || -z "${accountId:-}" || -z "${region:-}" ]]; then
+                echo "Skipping invalid profile mapping: $profile"
+                exit 0
+            fi
+
+            echo "Fetching credentials asynchronously for: $credName..."
+
+            # Fetch SSO credentials
+            local creds
+            if ! creds=$(aws sso get-role-credentials \
+                --account-id "$accountId" \
+                --role-name "$role" \
+                --region "$region" \
+                --access-token "$token" 2>/dev/null); then
+                echo "Error fetching credentials for $credName"
+                exit 1
+            fi
+
+            # Parse with a single jq execution to save process overhead
+            local parsed
+            parsed=$(echo "$creds" | jq -r '.roleCredentials | "\(.accessKeyId),\(.secretAccessKey),\(.sessionToken)"')
+            
+            # Save results to a temporary file unique to this profile
+            echo "$parsed" > "$tmp_dir/$credName"
+
+            # Handle CodeArtifact token generation inside the parallel loop if needed
+            if [ "$credName" = "$codeArtifactProfile" ]; then
+                local ca_token
+                ca_token=$(aws codeartifact get-authorization-token --domain "$codeArtifactDomain" --domain-owner "$accountId" --query authorizationToken --output text --profile "$credName" --region "$region" 2>/dev/null)
+                echo "$ca_token" > "$tmp_dir/${credName}_ca_token"
+            fi
+        ) &
+    done
+
+    # 3. Wait for all background API calls to finish
+    wait
+
+    # 4. Process the results and update configurations sequentially to avoid file corruption
     for profile in "${profileValues[@]}"; do
         IFS=',' read -r credName configname role accountId region <<< "$profile"
-
-        if [[ -z "${credName:-}" || -z "${configname:-}" || -z "${role:-}" || -z "${accountId:-}" || -z "${region:-}" ]]; then
-            echo "Skipping invalid profile mapping: $profile"
-            continue
+        
+        # Check if a file was successfully generated for this profile
+        if [[ -f "$tmp_dir/$credName" ]]; then
+            IFS=',' read -r access_key secret_key session_token <<< "$(cat "$tmp_dir/$credName")"
+            
+            # Update AWS profile configuration safely
+            aws configure set aws_access_key_id "$access_key" --profile "$credName"
+            aws configure set aws_secret_access_key "$secret_key" --profile "$credName"
+            aws configure set aws_session_token "$session_token" --profile "$credName"
+            echo "AWS credentials file for profile '$credName' updated successfully."
+            
+            # Read the CodeArtifact token back into the parent process environment if it exists
+            if [ "$credName" = "$codeArtifactProfile" ] && [[ -f "$tmp_dir/${credName}_ca_token" ]]; then
+                export CODEARTIFACT_AUTH_TOKEN
+                CODEARTIFACT_AUTH_TOKEN=$(cat "$tmp_dir/${credName}_ca_token")
+                echo "Successfully updated CODEARTIFACT_AUTH_TOKEN for this process"
+            fi
         fi
-
-        echo -e "Getting credentials using:\ncredName: $credName, configname: $configname, role: $role, accountId: $accountId, region: $region"
-
-        local creds
-        creds=$(aws sso get-role-credentials \
-            --account-id "$accountId" \
-            --role-name "$role" \
-            --region "$region" \
-            --access-token "$token")
-
-        local access_key
-        local secret_key
-        local session_token
-        access_key=$(echo "$creds" | jq -r '.roleCredentials.accessKeyId')
-        secret_key=$(echo "$creds" | jq -r '.roleCredentials.secretAccessKey')
-        session_token=$(echo "$creds" | jq -r '.roleCredentials.sessionToken')
-
-        aws configure set aws_access_key_id "$access_key" --profile "$credName"
-        aws configure set aws_secret_access_key "$secret_key" --profile "$credName"
-        aws configure set aws_session_token "$session_token" --profile "$credName"
-        echo "AWS credentials file for profile '$credName' updated successfully."
-
-        if [ "$credName" = "$codeArtifactProfile" ]; then
-            export CODEARTIFACT_AUTH_TOKEN
-            CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain "$codeArtifactDomain" --domain-owner "$accountId" --query authorizationToken --output text --profile "$credName" --region "$region")
-            echo "Successfully updated CODEARTIFACT_AUTH_TOKEN for this process"
-        fi
-
-        echo
     done
+
+    # 5. Clean up temporary directory
+    rm -rf "$tmp_dir"
 }
 
 updateAwsCreds "$@"
