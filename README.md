@@ -2,7 +2,7 @@
 
 ## Development Startup
 
-This project is intended to be run with the dev Docker Compose workflow in [docker-compose.dev.yml](docker-compose.dev.yml).
+This project is intended to be run with the Docker Compose workflow in [docker-compose.yml](docker-compose.yml). This is the only supported compose file — do not create alternate variants.
 
 The dev stack provides:
 
@@ -45,9 +45,19 @@ Copy the template and then edit the new file:
 cp .env.example .env
 ```
 
-### 3. Populate the required `.env` values
+### 3. Populate the required secrets via the Settings page
 
-At minimum, fill in these values in `.env`.
+`.env` only needs the `SETTINGS_DB_*` bootstrap values (see step 4 below). Every
+other secret — Mongo, Security_16, SnowDB, AWS profiles, Requests API key,
+infra hosts — lives in the `settings` Postgres table and is edited from the
+app's **Settings** page after the stack is up, not in `.env`. This keeps
+secrets out of the repo working copy and lets you change a value without
+rebuilding or restarting containers.
+
+On a fresh checkout, `settings` is prepopulated with the placeholder
+`defaultValue`s from `server/resources/settings/settingDefinitions.ts` (which
+mirror `.env.example`). Start the stack once, then open the Settings page and
+fill in the real values below.
 
 #### Mongo
 
@@ -131,7 +141,7 @@ If you want the default choices without prompts:
 bash ./scripts/generate-aws-profile-mappings.sh --use-defaults
 ```
 
-The script prints `.env`-ready values for:
+The script prints Settings-page-ready values for:
 
 - `PORT_FORWARD_AWS_SSO_LOGIN_PROFILE`
 - `PORT_FORWARD_AWS_PROFILE_MAPPINGS`
@@ -179,7 +189,7 @@ test -f ./snowdb.pem
 From the repository root:
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build -d
+docker compose up --build -d
 ```
 
 Endpoints:
@@ -192,20 +202,20 @@ Endpoints:
 Rebuild and restart only the API container:
 
 ```bash
-docker compose -f docker-compose.dev.yml build api
-docker compose -f docker-compose.dev.yml up -d api
+docker compose build api
+docker compose up -d api
 ```
 
 View API logs:
 
 ```bash
-docker compose -f docker-compose.dev.yml logs -f api
+docker compose logs -f api
 ```
 
 Open a shell in the API container:
 
 ```bash
-docker compose -f docker-compose.dev.yml exec api bash
+docker compose exec api bash
 ```
 
 ## Port Forwarding Notes
@@ -217,6 +227,6 @@ That means successful port forwarding depends on all of the following being true
 - AWS profiles are visible inside the container through the mounted `~/.aws`
 - SSH private keys are present in the project root so they mount into `/run/keys`
 - `~/.kube/config` exists if you use the Kubernetes forward
-- Your `.env` values point at the correct remote systems
+- Your Settings-page values point at the correct remote systems
 
-If a port forward starts but the destination is wrong, check the corresponding `.env` values first.
+If a port forward starts but the destination is wrong, check the corresponding Settings page values first — the forwards container re-reads them from the settings-store on every start/restart, so no rebuild is needed.

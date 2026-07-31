@@ -8,6 +8,9 @@
 // The external endpoint returns a raw array on list; we wrap it in
 // `{ items, total }` so the client contract mirrors the whiteLabel requests API.
 
+import { getSettingValue } from "../../common/settingsStore.ts";
+
+
 export type DataChangeRequestStatus =
     | "Pending"
     | "Confirmed"
@@ -33,16 +36,18 @@ export interface ListOptions {
     offset?: number;
 }
 
-function config(): { url: string; apiKey: string } {
-    const url = process.env.REQUESTS_URL;
-    const apiKey = process.env.REQUESTS_API_KEY;
-    if (!url) throw new Error("REQUESTS_URL environment variable is not set");
-    if (!apiKey) throw new Error("REQUESTS_API_KEY environment variable is not set");
+async function config(): Promise<{ url: string; apiKey: string }> {
+    const [url, apiKey] = await Promise.all([
+        getSettingValue("REQUESTS_URL"),
+        getSettingValue("REQUESTS_API_KEY"),
+    ]);
+    if (!url) throw new Error("REQUESTS_URL setting is not set");
+    if (!apiKey) throw new Error("REQUESTS_API_KEY setting is not set");
     return { url: url.replace(/\/+$/, ""), apiKey };
 }
 
-function authHeaders(): Record<string, string> {
-    const { apiKey } = config();
+async function authHeaders(): Promise<Record<string, string>> {
+    const { apiKey } = await config();
     return {
         Authorization: `Bearer ${apiKey}`,
         Accept: "application/json",
@@ -65,8 +70,8 @@ async function parseJson<T>(response: Response): Promise<T> {
 }
 
 export async function listRequests(options: ListOptions = {}): Promise<{ items: DataChangeRequest[]; total: number; }> {
-    const { url } = config();
-    const response = await fetch(url, { method: "GET", headers: authHeaders() });
+    const { url } = await config();
+    const response = await fetch(url, { method: "GET", headers: await authHeaders() });
     const raw = await parseJson<DataChangeRequest[] | { items: DataChangeRequest[]; total?: number }>(response);
 
     let items: DataChangeRequest[] = Array.isArray(raw) ? raw : (raw.items ?? []);
@@ -92,8 +97,8 @@ export async function listRequests(options: ListOptions = {}): Promise<{ items: 
 }
 
 export async function getRequest(id: string): Promise<DataChangeRequest | undefined> {
-    const { url } = config();
-    const response = await fetch(`${url}/${encodeURIComponent(id)}`, { method: "GET", headers: authHeaders() });
+    const { url } = await config();
+    const response = await fetch(`${url}/${encodeURIComponent(id)}`, { method: "GET", headers: await authHeaders() });
     if (response.status === 404) return undefined;
     return parseJson<DataChangeRequest>(response);
 }
@@ -105,10 +110,10 @@ export async function createRequest(input: {
     notes?: string | null;
     status?: DataChangeRequestStatus;
 }): Promise<DataChangeRequest> {
-    const { url } = config();
+    const { url } = await config();
     const response = await fetch(url, {
         method: "POST",
-        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        headers: { ...(await authHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify(input),
     });
     return parseJson<DataChangeRequest>(response);
@@ -118,10 +123,10 @@ export async function updateRequest(
     id: string,
     updates: Partial<Pick<DataChangeRequest, "status" | "notes" | "data" | "type">>,
 ): Promise<DataChangeRequest | undefined> {
-    const { url } = config();
+    const { url } = await config();
     const response = await fetch(`${url}/${encodeURIComponent(id)}`, {
         method: "PATCH",
-        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        headers: { ...(await authHeaders()), "Content-Type": "application/json" },
         body: JSON.stringify(updates),
     });
     if (response.status === 404) return undefined;
@@ -129,10 +134,10 @@ export async function updateRequest(
 }
 
 export async function deleteRequest(id: string): Promise<boolean> {
-    const { url } = config();
+    const { url } = await config();
     const response = await fetch(`${url}/${encodeURIComponent(id)}`, {
         method: "DELETE",
-        headers: authHeaders(),
+        headers: await authHeaders(),
     });
     if (response.status === 404) return false;
     if (!response.ok) throw new Error(await readError(response));

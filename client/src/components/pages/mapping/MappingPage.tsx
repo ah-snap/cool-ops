@@ -7,6 +7,7 @@ import { isServerError, parseApiResponse } from "../../../actions/apiClient.ts";
 import { apiUrl } from "../../../config.ts";
 import PageShell from "../../common/layout/PageShell.tsx";
 import "./mapping.css";
+import useSettings from "../../../hooks/useSettings.ts";
 
 function MappingPage() {
   const { commonNameOrMac: routeCommonNameOrMac } = useParams<{ commonNameOrMac?: string }>();
@@ -15,6 +16,7 @@ function MappingPage() {
   const [enableButton, setEnableButton] = useState<boolean>(Boolean(routeCommonNameOrMac));
   const [mapping, setMapping] = useState<Mapping | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [settings, _] = useSettings();
 
   const updateCommonName = (event: { target: { value: any } }) => {
     const value = event.target.value;

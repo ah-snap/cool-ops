@@ -27,6 +27,7 @@ const DataChangeRequests = lazy(() => import("./dataChangeRequests/index.ts"));
 const DataChangeRequestDetails = lazy(() =>
     import("./dataChangeRequests/DataChangeRequestDetails.tsx")
 );
+const SettingsPage = lazy(() => import("./settings/index.tsx"));
 
 type OptionsMap = Record<string, unknown>;
 
@@ -64,6 +65,7 @@ function MainPage() {
                             <Route path="/whiteLabelAssistRequests/:id" element={<WhiteLabelAssistRequestDetails />} />
                             <Route path="/dataChangeRequests" element={<DataChangeRequests />} />
                             <Route path="/dataChangeRequests/:id" element={<DataChangeRequestDetails />} />
+                            <Route path="/settings" element={<SettingsPage />} />
                         </Routes>
                     </Suspense>
                 </React.StrictMode>

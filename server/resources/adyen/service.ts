@@ -1,8 +1,9 @@
 import type { AdyenPspDetails } from "./dtos.js";
+import { getSettingValue } from "../../common/settingsStore.ts";
 
 export async function getPspDetails(psp: string): Promise<AdyenPspDetails | null> {
     const myHeaders = new Headers();
-    myHeaders.append("Cookie", process.env.adyenCookie);
+    myHeaders.append("Cookie", (await getSettingValue("adyenCookie")) || "");
 
     const requestOptions: RequestInit = {
         method: "GET",

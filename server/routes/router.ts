@@ -10,12 +10,14 @@ import { usersRouter } from '../resources/users/router.ts';
 import { router as requestsRouter } from '../resources/requests.ts/router.ts';
 import { dataChangeRequestsRouter } from '../resources/dataChangeRequests/router.ts';
 import { testUserRouter } from '../resources/testUser/router.ts';
+import { settingsRouter } from '../resources/settings/router.ts';
 
 
 export const router = Router();
 
 
 router.use('/licenses', licensesRouter);
+router.use('/settings', settingsRouter);
 router.use('/commonNames', commonNamesRouter);
 router.use('/automationAccounts', automationAccountsRouter);
 router.use('/showroomDemoLicenses', showroomDemoLicenses);

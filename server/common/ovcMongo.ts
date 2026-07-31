@@ -1,8 +1,9 @@
 import { MongoClient, MongoServerSelectionError, MongoNetworkError, MongoTopologyClosedError } from "mongodb";
 import { existsSync } from "node:fs";
+import { getSettingValue } from "./settingsStore.ts";
 
-function getMongoUri(): string {
-    const uri = process.env.mongoConnectionString;
+async function getMongoUri(): Promise<string> {
+    const uri = await getSettingValue("mongoConnectionString");
     if (!uri) {
         throw new Error("mongoConnectionString is not set");
     }
@@ -53,7 +54,7 @@ function isFatalConnectionError(err: unknown): boolean {
 }
 
 async function createClient(): Promise<MongoClient> {
-    const uri = getMongoUri();
+    const uri = await getMongoUri();
     const mongoClient = new MongoClient(uri, {
         // Reasonable timeouts so a transient failover doesn't hang requests forever.
         serverSelectionTimeoutMS: 15_000,

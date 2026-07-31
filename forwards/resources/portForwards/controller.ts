@@ -31,7 +31,7 @@ export async function getPortForwardLogs(req: Request, res: Response) {
 
 export async function startPortForward(req: Request, res: Response) {
     try {
-        const state = portForwardManager.start(req.params.id);
+        const state = await portForwardManager.start(req.params.id);
         res.json({ data: state });
     } catch (error) {
         res.status(404).json({ error: (error as Error).message });

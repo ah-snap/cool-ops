@@ -1,13 +1,21 @@
 import sql from "mssql";
+import { getSettingValue } from "./settingsStore.ts";
 
-function buildSqlConfig() {
+async function buildSqlConfig() {
+    const [user, password, database, host] = await Promise.all([
+        getSettingValue("security16User"),
+        getSettingValue("security16Password"),
+        getSettingValue("security16Database"),
+        getSettingValue("security16Host"),
+    ]);
+
     return {
-        user: process.env.security16User,
-        password: process.env.security16Password,
-        database: process.env.security16Database,
+        user,
+        password,
+        database,
         driver: 'tedious',
         port: Number(process.env.security16Port || 1433),
-        server: process.env.security16Host || 'localhost',
+        server: host || 'localhost',
         pool: {
             max: 10,
             min: 0,
@@ -79,7 +87,7 @@ export async function connect(): Promise<Pool> {
     }
 
     pendingConnect = (async () => {
-        const config = buildSqlConfig();
+        const config = await buildSqlConfig();
         console.log("Attempting to connect to SQL Server:", {
             server: config.server,
             port: config.port,

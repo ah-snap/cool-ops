@@ -217,7 +217,7 @@ class PortForwardManager {
         };
     }
 
-    start(id: string) {
+    async start(id: string) {
         const state = this.getState(id);
         const runMode = state.definition.runMode || "persistent";
 
@@ -249,12 +249,21 @@ class PortForwardManager {
             }
         }
 
+        // Pull the latest profile/host values from the settings store right
+        // before spawning, so edits made on the Settings page take effect on
+        // the next start/restart without recreating the container.
+        const [envOverrides, resolvedArgs] = await Promise.all([
+            state.definition.resolveEnv ? state.definition.resolveEnv() : Promise.resolve<Record<string, string>>({}),
+            state.definition.resolveArgs ? state.definition.resolveArgs() : Promise.resolve(state.definition.args)
+        ]);
+        state.definition = { ...state.definition, args: resolvedArgs };
+
         this.appendLog(id, "system", `Starting command: ${state.definition.command} ${state.definition.args.join(" ")}`);
 
         const spawnArgs = prepareArgsForExecution(state.definition.command, state.definition.args);
 
         const child = spawn(state.definition.command, spawnArgs, {
-            env: process.env,
+            env: { ...process.env, ...envOverrides },
             shell: false,
             detached: process.platform !== "win32",
             windowsHide: true,
@@ -320,11 +329,9 @@ class PortForwardManager {
                     state.restartTimer = null;
                     // Only restart if no one else has started it in the meantime.
                     if (state.status === "stopped" || state.status === "error") {
-                        try {
-                            this.start(id);
-                        } catch (err) {
+                        this.start(id).catch((err) => {
                             this.appendLog(id, "system", `Auto-restart failed: ${(err as Error).message}`);
-                        }
+                        });
                     }
                 }, backoffMs);
             } else if (code === 0) {

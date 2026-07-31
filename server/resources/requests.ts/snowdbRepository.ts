@@ -1,5 +1,6 @@
 import { Client } from "pg";
 import { getPgHost, getPgPort } from "../../common/snowdbPostgres.ts";
+import { getSettingValue } from "../../common/settingsStore.ts";
 
 interface SnowInsertInput {
     transaction_id: string;
@@ -26,14 +27,15 @@ export interface SnowLicenseRow {
     transactionid: string;
 }
 
-function createPgClient(): Client {
-    return new Client({
-        user: process.env.PGUSER,
-        host: getPgHost(),
-        database: process.env.PGDATABASE,
-        password: process.env.PGPASSWORD,
-        port: getPgPort(),
-    });
+async function createPgClient(): Promise<Client> {
+    const [user, host, database, password, port] = await Promise.all([
+        getSettingValue("PGUSER"),
+        getPgHost(),
+        getSettingValue("PGDATABASE"),
+        getSettingValue("PGPASSWORD"),
+        getPgPort(),
+    ]);
+    return new Client({ user, host, database, password, port });
 }
 
 function getSnowPspFilter(pspHints: string[]): { clause: string; params: unknown[] } {
@@ -44,7 +46,7 @@ function getSnowPspFilter(pspHints: string[]): { clause: string; params: unknown
 }
 
 export async function insertLicenseAndTransaction({ transaction_id, c4_user_id, skus, subscription_id, account_id, location_id, expiration_date, external_customer_id }: SnowInsertInput) {
-    const client = createPgClient();
+    const client = await createPgClient();
     try {
         await client.connect();
 
@@ -107,7 +109,7 @@ export async function insertLicenseAndTransaction({ transaction_id, c4_user_id, 
 }
 
 export async function getLicensesByAccountId({ accountId }: { accountId: string | number; }): Promise<SnowLicenseRow[]> {
-    const client = createPgClient();
+    const client = await createPgClient();
     try {
         await client.connect();
         const result = await client.query(
@@ -148,7 +150,7 @@ export async function getSnowLicenseDetails(pspHints: string[]): Promise<{
         };
     }
 
-    const client = createPgClient();
+    const client = await createPgClient();
     const { clause, params } = getSnowPspFilter(pspHints);
 
     try {
@@ -207,7 +209,7 @@ export async function revokeSnowLicenseTarget(pspHints: string[]): Promise<{ row
         return { rowCount: 0 };
     }
 
-    const client = createPgClient();
+    const client = await createPgClient();
     const { clause, params } = getSnowPspFilter(pspHints);
 
     try {
@@ -233,7 +235,7 @@ export async function deleteSnowLicenseTarget(pspHints: string[]): Promise<{ del
         return { deletedSubscriptions: 0, deletedTransactions: 0 };
     }
 
-    const client = createPgClient();
+    const client = await createPgClient();
     const { clause, params } = getSnowPspFilter(pspHints);
 
     try {

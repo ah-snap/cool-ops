@@ -83,3 +83,37 @@ export async function restartPortForward(id: string): Promise<PortForwardSummary
 export async function stopPortForward(id: string): Promise<PortForwardSummary> {
   return mutatePortForward(id, "stop");
 }
+
+export type AwsProfileDiscoveryResult = {
+  profile: string;
+  status: "ok" | "expired" | "error";
+  accountId?: string;
+  arn?: string;
+  role?: string;
+  region?: string;
+  message?: string;
+};
+
+export type AwsMappingSuggestion = {
+  settingKey: string;
+  accountId: string;
+  candidates: Array<{
+    credentialProfile: string;
+    configProfile: string;
+    role?: string;
+    region: string;
+  }>;
+};
+
+export type AwsProfileDiscoveryResponse = {
+  scannedAt: string;
+  profiles: AwsProfileDiscoveryResult[];
+  suggestions: AwsMappingSuggestion[];
+  unmatchedAccountIds: string[];
+};
+
+export async function fetchAwsProfileDiscovery(): Promise<AwsProfileDiscoveryResponse> {
+  const response = await fetch(forwardsUrl("/awsProfileDiscovery"));
+  const data = await parseApiResponse<{ data: AwsProfileDiscoveryResponse }>(response);
+  return unwrapData(data);
+}

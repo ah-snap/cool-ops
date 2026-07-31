@@ -16,6 +16,7 @@ function NavigationBar() {
           <NavigationLink to={'/users'}>Users</NavigationLink>
           <NavigationLink to={'/bulk'}>Bulk Updates</NavigationLink>
           <NavigationLink to={'/managePortForwards'}>Manage Port Forwards</NavigationLink>
+          <NavigationLink to={'/settings'}>Settings</NavigationLink>
           <TestUserActiveIndicator />
           <PortForwardsStatusIndicator />
         </ul>

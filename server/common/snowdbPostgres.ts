@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
+import { getSettingValue } from "./settingsStore.ts";
 
-export function getPgHost(): string {
-    const host = process.env.PGHOST || "localhost";
+export async function getPgHost(): Promise<string> {
+    const host = (await getSettingValue("PGHOST")) || "localhost";
 
     const isContainer = existsSync("/.dockerenv");
     if (!isContainer) {
@@ -19,6 +20,6 @@ export function getPgHost(): string {
     return host;
 }
 
-export function getPgPort(): number {
-    return Number(process.env.PGPORT || 5433);
+export async function getPgPort(): Promise<number> {
+    return Number((await getSettingValue("PGPORT")) || 5433);
 }

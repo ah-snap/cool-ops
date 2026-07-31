@@ -7,6 +7,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { Router } from 'express';
 import { portForwardsRouter } from './resources/portForwards/router.ts';
 import { configurePortForwardSockets } from './resources/portForwards/socket.ts';
+import { awsProfileDiscoveryRouter } from './resources/awsProfileDiscovery/router.ts';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ const PORT = process.env.PORT || 3004;
 
 const apiRouter = Router();
 apiRouter.use('/portForwards', portForwardsRouter);
+apiRouter.use('/awsProfileDiscovery', awsProfileDiscoveryRouter);
 
 app.use('/api', apiRouter);
 

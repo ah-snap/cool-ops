@@ -58,7 +58,8 @@ WHERE A.CertificateCommonName = @commonNameOrMac
    OR A.CertificateCommonName LIKE CONCAT('%', REPLACE(@commonNameOrMac, ':', ''))
    OR A.Name = @commonNameOrMac
    OR A.Name = @accountName
-   OR CONVERT(VARCHAR(50), A.external_id) = @commonNameOrMac`;
+   OR CONVERT(VARCHAR(50), A.external_id) = @commonNameOrMac
+   OR CONVERT(VARCHAR(50), A.id) = @commonNameOrMac`;
 
 export const getSimpleMappingInfo = `SELECT
         A.id
@@ -79,4 +80,5 @@ FROM Security_16..Account A
 WHERE A.CertificateCommonName LIKE CONCAT('%', REPLACE(@commonNameOrMac, ':', ''))
       OR A.Name = @commonNameOrMac
       OR A.Name = @accountName
-      OR CONVERT(VARCHAR(50), A.external_id) = @commonNameOrMac`;
+      OR CONVERT(VARCHAR(50), A.external_id) = @commonNameOrMac
+      OR CONVERT(VARCHAR(50), A.id) = @commonNameOrMac`;

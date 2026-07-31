@@ -134,3 +134,85 @@ export type LicenseDetailsActionResult = {
         deletedTransactions?: number;
     };
 }
+
+export type AwsProfileMapping = {
+    credentialProfile: string;
+    configProfile: string;
+    role: string;
+    accountId: string;
+    region: string;
+}
+
+export type Settings = {
+    testValue: string;
+    testNumber: number;
+
+    mongoConnectionString: string;
+    security16User: string;
+    security16Password: string;
+    security16Database: string;
+    security16Host: string;
+    adyenCookie: string;
+    pgUser: string;
+    pgPassword: string;
+    pgHost: string;
+    pgPort: string;
+    pgDatabase: string;
+    portForwardAwsSsoLoginProfile: string;
+    portForwardAwsSsoUseDeviceCode: string;
+    ovrcProdSsmProfile: string;
+    portForwardAwsCodeArtifactProfile: string;
+    portForwardAwsCodeArtifactDomain: string;
+    snowdbHost: string;
+    security16ForwardingHost: string;
+    snowdbForwardUser: string;
+    requestsUrl: string;
+    requestsApiKey: string;
+
+    cloudExperiencesDevMapping: AwsProfileMapping;
+    cloudExperiencesProdMapping: AwsProfileMapping;
+    cloudServicesDevMapping: AwsProfileMapping;
+    cloudServicesProdMapping: AwsProfileMapping;
+    ovrcDevMapping: AwsProfileMapping;
+    ovrcProdMapping: AwsProfileMapping;
+    ovrcStageMapping: AwsProfileMapping;
+    ovrcInteropProdMapping: AwsProfileMapping;
+    ovrcInteropStageMapping: AwsProfileMapping;
+}
+
+export type SettingsUpdate = {
+    setTestValue: (value: string) => void;
+    setTestNumber: (value: number) => void;
+
+    setMongoConnectionString: (value: string) => void;
+    setSecurity16User: (value: string) => void;
+    setSecurity16Password: (value: string) => void;
+    setSecurity16Database: (value: string) => void;
+    setSecurity16Host: (value: string) => void;
+    setAdyenCookie: (value: string) => void;
+    setPgUser: (value: string) => void;
+    setPgPassword: (value: string) => void;
+    setPgHost: (value: string) => void;
+    setPgPort: (value: string) => void;
+    setPgDatabase: (value: string) => void;
+    setPortForwardAwsSsoLoginProfile: (value: string) => void;
+    setPortForwardAwsSsoUseDeviceCode: (value: string) => void;
+    setOvrcProdSsmProfile: (value: string) => void;
+    setPortForwardAwsCodeArtifactProfile: (value: string) => void;
+    setPortForwardAwsCodeArtifactDomain: (value: string) => void;
+    setSnowdbHost: (value: string) => void;
+    setSecurity16ForwardingHost: (value: string) => void;
+    setSnowdbForwardUser: (value: string) => void;
+    setRequestsUrl: (value: string) => void;
+    setRequestsApiKey: (value: string) => void;
+
+    setCloudExperiencesDevMapping: (value: AwsProfileMapping) => void;
+    setCloudExperiencesProdMapping: (value: AwsProfileMapping) => void;
+    setCloudServicesDevMapping: (value: AwsProfileMapping) => void;
+    setCloudServicesProdMapping: (value: AwsProfileMapping) => void;
+    setOvrcDevMapping: (value: AwsProfileMapping) => void;
+    setOvrcProdMapping: (value: AwsProfileMapping) => void;
+    setOvrcStageMapping: (value: AwsProfileMapping) => void;
+    setOvrcInteropProdMapping: (value: AwsProfileMapping) => void;
+    setOvrcInteropStageMapping: (value: AwsProfileMapping) => void;
+}
