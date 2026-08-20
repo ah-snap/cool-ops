@@ -63,7 +63,7 @@ const columns: GridColDef[] = [
 
 ];
 
-type Row = Mapping & {
+export type Row = Mapping & {
     Source: string;
     XBackwardsUser?: string;
     onRefresh?: () => void;
@@ -177,7 +177,7 @@ const resolveExcludeAssist = (automationAccounts: Mapping["automationAccounts"],
     return (match ?? automationAccounts[0]).excludeAssist ?? false;
 }
 
-const calculateC4Row = (mapping: Mapping, onRefresh?: () => void): Row => {
+export const calculateC4Row = (mapping: Mapping, onRefresh?: () => void): Row => {
     return { 
         ...mapping,
         id: mapping?.id ?? 0,

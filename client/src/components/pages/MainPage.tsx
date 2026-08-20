@@ -6,10 +6,9 @@ import {
     Routes
 } from "react-router-dom";
 
-const MappingPage = lazy(() => import("./mapping/index.ts"));
+const AccountsPage = lazy(() => import("./accounts/index.ts"));
 const DCodeValidationPage = lazy(() => import("./dcodeValidation/index.ts"));
 const ShowroomDemoLicensesPage = lazy(() => import("./showroomDemoLicenses/index.ts"));
-const MissingLicensePage = lazy(() => import("./missingLicense/index.ts"));
 const PSPLookup = lazy(() => import("./pspLookup/index.ts"));
 const BulkUpdates = lazy(() => import("./bulkUpdates/index.tsx"));
 const BulkMissingLicensesPage = lazy(() => import("./bulkMissingLicenses/index.ts"));
@@ -43,10 +42,8 @@ function MainPage() {
                 <React.StrictMode>
                     <Suspense fallback={<PageFallback />}>
                         <Routes>
-                            <Route path="/mapping" element={<MappingPage />} />
-                            <Route path="/mapping/:commonNameOrMac" element={<MappingPage />} />
-                            <Route path="/licenses" element={<MissingLicensePage />} />
-                            <Route path="/licenses/:commonNameOrMac" element={<MissingLicensePage />} />
+                            <Route path="/accounts" element={<AccountsPage />} />
+                            <Route path="/accounts/:commonNameOrMac" element={<AccountsPage />} />
                             <Route path="/showroomDemoLicenses" element={<ShowroomDemoLicensesPage />} />
                             <Route path="/customerMapping" element={<DCodeValidationPage />} />
                             <Route path="/pspLookup" element={<PSPLookup />} />

@@ -22,7 +22,7 @@ const COLUMNS: GridColDef<GridRow>[] = [
         renderCell: (params) => {
             const value = params.value as string | null;
             if (!value) return null;
-            return <Link to={`/licenses/${encodeURIComponent(value)}`}>{value}</Link>;
+            return <Link to={`/accounts/${encodeURIComponent(value)}`}>{value}</Link>;
         }
     },
     {

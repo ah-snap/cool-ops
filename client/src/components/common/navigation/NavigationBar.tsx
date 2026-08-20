@@ -10,8 +10,7 @@ function NavigationBar() {
         <h1>Navigation</h1>
         <ul>
           <li>Home</li>
-          <NavigationLink to={'/mapping'}>Mapping</NavigationLink>
-          <NavigationLink to={'/licenses'}>Licenses</NavigationLink>
+          <NavigationLink to={'/accounts'}>Accounts</NavigationLink>
           <NavigationLink to={'/dealer'}>Dealers</NavigationLink>
           <NavigationLink to={'/users'}>Users</NavigationLink>
           <NavigationLink to={'/bulk'}>Bulk Updates</NavigationLink>

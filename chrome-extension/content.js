@@ -9,17 +9,17 @@
  * Patterns (see PATTERNS array):
  *   Labeled (preferred — capture the first whitespace token after the label):
  *     "DCode: <token>"                     -> /dealer/{token}
- *     "Controller Common Name: <token>"    -> /licenses/{token}
- *     "Account Name: <token>"              -> /licenses/{token}
+ *     "Controller Common Name: <token>"    -> /accounts/{token}
+ *     "Account Name: <token>"              -> /accounts/{token}
  *       (also catches "my.Control4 Account Name: ..." since it contains the label)
- *     "Controller MAC Address: <token>"    -> /licenses/{token}
+ *     "Controller MAC Address: <token>"    -> /accounts/{token}
  *       (also catches "Director / Controller MAC Address: ...")
  *
  *   Bare tokens (fallback for inline mentions):
  *     D + 4-8 digits                        -> /dealer/{token}
- *     Control4_<model>_<12 hex> (case-insensitive) -> /licenses/{token}
- *     000FFF + 6 hex (case-insensitive)     -> /licenses/{token}
- *     00:0F:FF:XX:XX:XX (case-insensitive)  -> /licenses/{token}
+ *     Control4_<model>_<12 hex> (case-insensitive) -> /accounts/{token}
+ *     000FFF + 6 hex (case-insensitive)     -> /accounts/{token}
+ *     00:0F:FF:XX:XX:XX (case-insensitive)  -> /accounts/{token}
  *     email address                         -> /users/{token}
  */
 
@@ -44,7 +44,7 @@ const PATTERNS = [
     kind: "labeled",
     // "Controller Common Name: LinShawnC469e8fb72"
     regex: /\bController Common Name:\s*(\S+)/gi,
-    buildPath: (match) => `/licenses/${encodeURIComponent(match[1])}`,
+    buildPath: (match) => `/accounts/${encodeURIComponent(match[1])}`,
     label: (match) => `Open controller ${match[1]} in Cool Ops`,
     captureGroup: 1,
   },
@@ -55,7 +55,7 @@ const PATTERNS = [
     // Also catches "my.Control4 Account Name: ..." because the label substring
     // still appears in the text.
     regex: /\bAccount Name:\s*(\S+)/gi,
-    buildPath: (match) => `/licenses/${encodeURIComponent(match[1])}`,
+    buildPath: (match) => `/accounts/${encodeURIComponent(match[1])}`,
     label: (match) => `Open account ${match[1]} in Cool Ops`,
     captureGroup: 1,
   },
@@ -66,7 +66,7 @@ const PATTERNS = [
     // Also catches "Director / Controller MAC Address: ..." because the label
     // substring still appears in the text.
     regex: /\bController MAC Address:\s*(\S+)/gi,
-    buildPath: (match) => `/licenses/${encodeURIComponent(match[1])}`,
+    buildPath: (match) => `/accounts/${encodeURIComponent(match[1])}`,
     label: (match) => `Open controller MAC ${match[1]} in Cool Ops`,
     captureGroup: 1,
   },
@@ -78,7 +78,7 @@ const PATTERNS = [
     // "Controller Common Name: ..." or "Controller MAC Address: ..." — those
     // have their own dedicated patterns above.
     regex: /\bController:\s*(\S+)/gi,
-    buildPath: (match) => `/licenses/${encodeURIComponent(match[1])}`,
+    buildPath: (match) => `/accounts/${encodeURIComponent(match[1])}`,
     label: (match) => `Open controller ${match[1]} in Cool Ops`,
     captureGroup: 1,
   },
@@ -97,7 +97,7 @@ const PATTERNS = [
     kind: "bare",
     // control4_<model>_<12 hex>, case-insensitive.
     regex: /\bcontrol4_[A-Za-z0-9]+_[0-9A-Fa-f]{12}\b/gi,
-    buildPath: (match) => `/licenses/${encodeURIComponent(match[0])}`,
+    buildPath: (match) => `/accounts/${encodeURIComponent(match[0])}`,
     label: (match) => `Open account ${match[0]} in Cool Ops`,
   },
   {
@@ -105,7 +105,7 @@ const PATTERNS = [
     kind: "bare",
     // 12 hex characters starting with 000FFF, no separators.
     regex: /\b000FFF[0-9A-Fa-f]{6}\b/gi,
-    buildPath: (match) => `/licenses/${encodeURIComponent(match[0])}`,
+    buildPath: (match) => `/accounts/${encodeURIComponent(match[0])}`,
     label: (match) => `Open controller MAC ${match[0]} in Cool Ops`,
   },
   {
@@ -113,7 +113,7 @@ const PATTERNS = [
     kind: "bare",
     // Colon-separated form of the same: 00:0F:FF:XX:XX:XX (case-insensitive).
     regex: /\b00:0F:FF(?::[0-9A-Fa-f]{2}){3}\b/gi,
-    buildPath: (match) => `/licenses/${encodeURIComponent(match[0])}`,
+    buildPath: (match) => `/accounts/${encodeURIComponent(match[0])}`,
     label: (match) => `Open controller MAC ${match[0]} in Cool Ops`,
   },
   {

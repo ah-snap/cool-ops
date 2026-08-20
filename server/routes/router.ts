@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { licensesRouter } from '../resources/licenses/router.ts';
 import { accountsRouter } from '../resources/accounts/router.ts';
+import { accountRegistrationRouter } from '../resources/accountRegistration/router.ts';
 import { commonNamesRouter } from '../resources/commonNames/router.ts';
 import { automationAccountsRouter } from '../resources/automationAccounts/automationAccounts.router.ts';
 import { showroomDemoLicenses } from '../resources/showroomDemoLicenses/router.ts';
@@ -22,6 +23,7 @@ router.use('/commonNames', commonNamesRouter);
 router.use('/automationAccounts', automationAccountsRouter);
 router.use('/showroomDemoLicenses', showroomDemoLicenses);
 router.use('/accounts', accountsRouter);
+router.use('/accountRegistration', accountRegistrationRouter);
 router.use('/adyen', adyenRouter);
 router.use('/dealers', dealersRouter);
 router.use('/users', usersRouter);

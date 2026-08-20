@@ -1,0 +1,34 @@
+.accountsPageInput {
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 220px;
+  height: 20px;
+}
+
+.accountsMappingSection {
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgb(30, 30, 30);
+}
+
+.accountsTabsSection {
+  margin-top: 5px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgb(30, 30, 30);
+}
+
+.accountsTabSection {
+  margin-top: 20px;
+}
+
+.accountsExtraInfoActions {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.accountsExternalIdInput {
+  width: 500px;
+}

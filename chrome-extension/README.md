@@ -7,8 +7,8 @@ An unpacked Chrome extension (Manifest V3) that runs on `https://jira.snapone.co
 | Pattern                                    | Example                          | Opens in Cool Ops            |
 | ------------------------------------------ | -------------------------------- | ---------------------------- |
 | `D` + 6 digits                             | `D123456`                        | `/dealer/D123456`            |
-| `Control4_<Model>_<12 hex>` (controller CN) | `Control4_HC800_000FFF123456`   | `/licenses/Control4_HC800_000FFF123456` |
-| `Account Name: <token>` (first token)      | `Account Name: ABCD1234`         | `/licenses/ABCD1234`         |
+| `Control4_<Model>_<12 hex>` (controller CN) | `Control4_HC800_000FFF123456`   | `/accounts/Control4_HC800_000FFF123456` |
+| `Account Name: <token>` (first token)      | `Account Name: ABCD1234`         | `/accounts/ABCD1234`         |
 
 Patterns live in [content.js](content.js) — add new ones to the `PATTERNS` array.
 

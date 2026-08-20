@@ -29,6 +29,27 @@ export type Mapping = {
     error?: any;
 }
 
+export type AccountRegistration = {
+    Id: number;
+    AccountId: number;
+    Company: string | null;
+    Address: string | null;
+    City: string | null;
+    State: string | null;
+    Zip: string | null;
+    Country: string | null;
+    Phone: string | null;
+    AllowsPromotions: boolean | null;
+    AllowsControllerUpdates: boolean | null;
+    InstallZoning: boolean | null;
+    InstallManufacturingStage: boolean | null;
+    lat: number | null;
+    long: number | null;
+    address_text: string | null;
+}
+
+export type AccountRegistrationPatch = Partial<Omit<AccountRegistration, "Id" | "AccountId">>;
+
 export type SimpleAccountMapping = {
     id: number;
     accountId: number;
