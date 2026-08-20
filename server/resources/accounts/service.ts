@@ -36,6 +36,18 @@ function isValidConnectTier(value: unknown): value is ConnectTier | null {
     return typeof value === "string" && (CONNECT_TIER_VALUES as string[]).includes(value);
 }
 
+function parseHandoffDate(value: unknown): Date | null {
+    if (value === null) return null;
+    if (typeof value !== "string" && !(value instanceof Date)) {
+        throw new Error(`Invalid handoffDate '${String(value)}'. Must be an ISO date string or null.`);
+    }
+    const parsed = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        throw new Error(`Invalid handoffDate '${String(value)}'. Must be a valid date or null.`);
+    }
+    return parsed;
+}
+
 export async function patchAccount({ accountName, patch }: { accountName: string; patch: unknown }): Promise<{ updated: (keyof AccountPatch)[] }> {
     if (!patch || typeof patch !== "object") {
         throw new Error("Request body must be an object");
@@ -58,9 +70,13 @@ export async function patchAccount({ accountName, patch }: { accountName: string
         sanitized.connectTier = rawPatch.connectTier;
     }
 
+    if ("handoffDate" in rawPatch) {
+        sanitized.handoffDate = parseHandoffDate(rawPatch.handoffDate);
+    }
+
     const updatedFields = Object.keys(sanitized) as (keyof AccountPatch)[];
     if (updatedFields.length === 0) {
-        throw new Error("No updatable fields provided. Supported fields: accountType, connectTier.");
+        throw new Error("No updatable fields provided. Supported fields: accountType, connectTier, handoffDate.");
     }
 
     await security16.withPool(() => repository.patchAccount({ accountName, patch: sanitized }));

@@ -1,6 +1,3 @@
-Page for looking up by user
-(security 16 user dealer/consumer or ovrc)
-
 Option to restart forwards on timeout
 
 Merge Mapping/Licenses into a new account page, maybe with subpages
@@ -14,24 +11,38 @@ Order dcodes st ovrc one appears first
 
 Rework the add licenses control
 
-Move bulk pages into a single bulk updates page
-Add info on how to use page
-Link to documents
-Maybe pull data from documents rather than clipboard
-
-Forward DB ports to host machine so I don't have to forward them anymore
 
 Page for datastored generic queries
 
 Potential extra infos for mapping:
     Invite history
     When displaying multiple automation accounts cross out deleted entries
-    Lookup by account id
 
 Toggle for staging mode
 Staging mode adds
     * Create account in configurable state
 
 Long future nice adds
-Websocket events to be able to load pages with info from jira tickets
 Split app into plugins so that different teams could use different plugins
+
+
+
+
+
+
+
+Export/Import settings as json blobs for submitting to paste.control4
+Handle unaliased accounts
+Consider writing the whole file all at once, rather than updates. Would save a few seconds
+Update the readme
+    * user will need to run secrets store script for setup
+    * user will need to update the settings
+
+
+
+Error
+    Security 16 forward:
+    [3:19:41 PM] [stdout] Cannot perform start session: write tcp 172.20.0.5:49348->3.146.10.105:443: write: broken pipe
+    [3:19:41 PM] [stderr] 2026/08/03 21:19:41 socat[3363] E connect(7, AF=2 127.0.0.1:11433, 16): Connection refused
+    [3:19:41 PM] [stderr] 2026/08/03 21:19:41 socat[3364] E connect(7, AF=2 127.0.0.1:11433, 16): Connection refused
+    [3:19:46 PM] [stderr] 2026/08/03 21:19:46 socat[3365] E connect(7, AF=2 127.0.0.1:11433, 16): Connection refused

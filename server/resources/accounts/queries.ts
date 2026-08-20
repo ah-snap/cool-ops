@@ -81,3 +81,8 @@ SET C.connect_tier = @connectTier
 FROM Security_16..Consumer C
 INNER JOIN Security_16..Account A ON A.Id = C.AccountId
 WHERE A.Name = @accontName`
+
+export const updateHandoffDate = `
+UPDATE Security_16..Account
+SET handoff_date = @handoffDate
+WHERE Name = @accontName`

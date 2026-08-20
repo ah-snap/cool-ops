@@ -18,6 +18,7 @@ export type ConnectTier = typeof CONNECT_TIER_VALUES[number];
 export interface AccountPatch {
     accountType?: "Connect" | "Legacy";
     connectTier?: ConnectTier | null;
+    handoffDate?: string | null;
 }
 
 export async function getAccountMappingByCommonNameOrMac(commonNameOrMac: string) : Promise<Mapping | ServerError | null> {

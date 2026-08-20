@@ -54,7 +54,13 @@ export interface UpdateConnectTierInput {
     connectTier: ConnectTier | null;
 }
 
+export interface UpdateHandoffDateInput {
+    accountName: string;
+    handoffDate: Date | null;
+}
+
 export interface AccountPatch {
     accountType?: "Connect" | "Legacy";
     connectTier?: ConnectTier | null;
+    handoffDate?: Date | null;
 }

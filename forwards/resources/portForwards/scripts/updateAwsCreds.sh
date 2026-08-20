@@ -145,28 +145,88 @@ updateAwsCreds() {
     # 3. Wait for all background API calls to finish
     wait
 
-    # 4. Process the results and update configurations sequentially to avoid file corruption
+    # 4. Build the updated credentials file content in memory, then write it once instead of
+    #    issuing three `aws configure set` calls (each its own read/modify/write) per profile.
+    local credentialsFile="${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/credentials}"
+    local existingContent=""
+    if [[ -f "$credentialsFile" ]]; then
+        existingContent=$(cat "$credentialsFile")
+    fi
+
+    local managedProfiles=()
+    local newSections=""
+    local codeArtifactTokenValue=""
+
     for profile in "${profileValues[@]}"; do
         IFS=',' read -r credName configname role accountId region <<< "$profile"
-        
+
         # Check if a file was successfully generated for this profile
         if [[ -f "$tmp_dir/$credName" ]]; then
             IFS=',' read -r access_key secret_key session_token <<< "$(cat "$tmp_dir/$credName")"
-            
-            # Update AWS profile configuration safely
-            aws configure set aws_access_key_id "$access_key" --profile "$credName"
-            aws configure set aws_secret_access_key "$secret_key" --profile "$credName"
-            aws configure set aws_session_token "$session_token" --profile "$credName"
-            echo "AWS credentials file for profile '$credName' updated successfully."
-            
+
+            managedProfiles+=("$credName")
+            newSections+=$'\n'"[$credName]"$'\n'
+            newSections+="aws_access_key_id = $access_key"$'\n'
+            newSections+="aws_secret_access_key = $secret_key"$'\n'
+            newSections+="aws_session_token = $session_token"$'\n'
+
             # Read the CodeArtifact token back into the parent process environment if it exists
             if [ "$credName" = "$codeArtifactProfile" ] && [[ -f "$tmp_dir/${credName}_ca_token" ]]; then
-                export CODEARTIFACT_AUTH_TOKEN
-                CODEARTIFACT_AUTH_TOKEN=$(cat "$tmp_dir/${credName}_ca_token")
-                echo "Successfully updated CODEARTIFACT_AUTH_TOKEN for this process"
+                codeArtifactTokenValue=$(cat "$tmp_dir/${credName}_ca_token")
             fi
         fi
     done
+
+    if [[ ${#managedProfiles[@]} -gt 0 ]]; then
+        # Drop any pre-existing sections for the profiles we're replacing so they aren't duplicated
+        local strippedContent
+        strippedContent=$(awk -v profiles="$(printf '%s\n' "${managedProfiles[@]}")" '
+            BEGIN {
+                n = split(profiles, list, "\n")
+                for (i = 1; i <= n; i++) if (list[i] != "") skip[list[i]] = 1
+            }
+            /^\[.*\]$/ {
+                name = substr($0, 2, length($0) - 2)
+                skipping = (name in skip)
+                if (!skipping) print
+                next
+            }
+            { if (!skipping) print }
+        ' <<< "$existingContent")
+
+        printf '%s\n' "${strippedContent}${newSections}" > "$credentialsFile"
+        chmod 600 "$credentialsFile"
+        echo "AWS credentials file updated successfully for ${#managedProfiles[@]} profile(s)."
+    fi
+
+    if [[ -n "$codeArtifactTokenValue" ]]; then
+        export CODEARTIFACT_AUTH_TOKEN="$codeArtifactTokenValue"
+        echo "Successfully updated CODEARTIFACT_AUTH_TOKEN for this process"
+    fi
+
+    # --- Previous approach: update each profile/key one at a time via `aws configure set`. ---
+    # --- Kept here as a fallback in case direct writes to the credentials file cause issues. ---
+    # for profile in "${profileValues[@]}"; do
+    #     IFS=',' read -r credName configname role accountId region <<< "$profile"
+    #
+    #     # Check if a file was successfully generated for this profile
+    #     if [[ -f "$tmp_dir/$credName" ]]; then
+    #         IFS=',' read -r access_key secret_key session_token <<< "$(cat "$tmp_dir/$credName")"
+    #
+    #         # Update AWS profile configuration safely
+    #         aws configure set aws_access_key_id "$access_key" --profile "$credName"
+    #         aws configure set aws_secret_access_key "$secret_key" --profile "$credName"
+    #         aws configure set aws_session_token "$session_token" --profile "$credName"
+    #         echo "AWS credentials file for profile '$credName' updated successfully."
+    #
+    #         # Read the CodeArtifact token back into the parent process environment if it exists
+    #         if [ "$credName" = "$codeArtifactProfile" ] && [[ -f "$tmp_dir/${credName}_ca_token" ]]; then
+    #             export CODEARTIFACT_AUTH_TOKEN
+    #             CODEARTIFACT_AUTH_TOKEN=$(cat "$tmp_dir/${credName}_ca_token")
+    #             echo "Successfully updated CODEARTIFACT_AUTH_TOKEN for this process"
+    #         fi
+    #     fi
+    # done
 
     # 5. Clean up temporary directory
     rm -rf "$tmp_dir"

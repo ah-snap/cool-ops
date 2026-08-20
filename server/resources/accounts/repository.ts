@@ -1,6 +1,6 @@
 import sql from "mssql";
 import * as queries from "./queries.js"
-import type { AccountPatch, CreateLegacyAccountInput, CreateLegacyAccountResultRow, MarkAccountAsConnectInput, UpdateAccountTypeInput, UpdateConnectTierInput } from "./dtos.js";
+import type { AccountPatch, CreateLegacyAccountInput, CreateLegacyAccountResultRow, MarkAccountAsConnectInput, UpdateAccountTypeInput, UpdateConnectTierInput, UpdateHandoffDateInput } from "./dtos.js";
 
 export async function createLegacyAccount({ accountName, firstName, lastName, email, address, city, state, postalCode, phone, country, companyName }: CreateLegacyAccountInput): Promise<CreateLegacyAccountResultRow[]> {
     const query = queries.createLegacyAccount;
@@ -59,11 +59,26 @@ export async function updateConnectTier({ accountName, connectTier }: UpdateConn
     return result.recordset;
 }
 
+export async function updateHandoffDate({ accountName, handoffDate }: UpdateHandoffDateInput): Promise<unknown[]> {
+    const query = queries.updateHandoffDate;
+
+    const request = new sql.Request();
+    request.input('accontName', sql.VarChar(25), accountName);
+    request.input('handoffDate', sql.DateTime, handoffDate);
+
+    const result = await request.query(query);
+    console.log("Update Handoff Date Result", result);
+    return result.recordset;
+}
+
 export async function patchAccount({ accountName, patch }: { accountName: string; patch: AccountPatch }): Promise<void> {
     if (patch.accountType !== undefined) {
         await updateAccountType({ accountName, newType: patch.accountType });
     }
     if (patch.connectTier !== undefined) {
         await updateConnectTier({ accountName, connectTier: patch.connectTier });
+    }
+    if (patch.handoffDate !== undefined) {
+        await updateHandoffDate({ accountName, handoffDate: patch.handoffDate });
     }
 }

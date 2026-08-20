@@ -51,7 +51,7 @@ export async function insertLicense({ pool, oldPsp, psp, code, duration, consume
         pool = await security16.connect();
         console.log("Connected to security16");
     }
-    
+
     if (!code && oldPsp) {
         const oldTransaction: SubscriptionCodeValues = await repository.getValuesForSubscriptionCode(pool, oldPsp);
         return insertLicense({
@@ -135,7 +135,7 @@ export async function insertTransaction({ pool, referencePSP, transaction_id, ac
         tax_percent,
         cancellation_date
     });
-    
+
     return result;
 }
 
@@ -170,11 +170,11 @@ async function unmurder4Sight(psp: string): Promise<{ vt4SightID: number | null;
     const ids = await repository.getIdsForMurder(psp);
 
     if (ids.sc4SightID) {
-        return {...ids, error: "Already exists"};
+        return { ...ids, error: "Already exists" };
     }
 
     const result = await repository.insertSubscriptionCodeFromIds(ids as { vt4SightID: number; scConnectID: number; }, code)
-    return {...ids, sc4SightID: result.recordset[0].ID};
+    return { ...ids, sc4SightID: result.recordset[0].ID };
 }
 
 
@@ -191,7 +191,7 @@ export function generateRandomCode() {
     return code.match(/..../g).join('-');
 }
 
-export async function createLicense({oldPsp, newPsp}: { oldPsp?: string; newPsp: string; }) {
+export async function createLicense({ oldPsp, newPsp }: { oldPsp?: string; newPsp: string; }) {
     console.log("Connecting to security16");
     return security16.withPool(async (pool) => {
         console.log("Connected");
@@ -202,7 +202,7 @@ export async function createLicense({oldPsp, newPsp}: { oldPsp?: string; newPsp:
     });
 }
 
-export async function getTransactionInformation({accountName, accountId}: { accountName?: string; accountId?: string | number; }): Promise<Array<LicenseTransactionRow & { expirationDateSnow?: Date | null; }>> {
+export async function getTransactionInformation({ accountName, accountId }: { accountName?: string; accountId?: string | number; }): Promise<Array<LicenseTransactionRow & { expirationDateSnow?: Date | null; }>> {
     const security16Result = await security16.withPool(() =>
         repository.getTransactionInformation({ accountName, accountId })
     );
@@ -254,7 +254,7 @@ export async function getTransactionInformation({accountName, accountId}: { acco
     }
 }
 
-export async function getPotentiallyMissingPsp({psp, externalId}: { psp?: string; externalId?: string; }): Promise<PotentiallyMissingPspRow[]> {
+export async function getPotentiallyMissingPsp({ psp, externalId }: { psp?: string; externalId?: string; }): Promise<PotentiallyMissingPspRow[]> {
     return security16.withPool(() => repository.getPotentiallyMissingPsp({ psp, externalId }));
 }
 
@@ -269,7 +269,7 @@ export async function validateStripeEvents({ events }: { events: Array<{ id: str
 export async function retrieveStripeEvents(): Promise<StripeValidationRow[] | null> {
     const events = [];
     let has_more = true;
-    
+
     do {
         const batch = await retrieveBatchOfStripeEvents({ lastEventId: events.length > 0 ? events[events.length - 1].id : null, batchSize: 100 });
         console.log("Batch", batch);
@@ -302,12 +302,12 @@ export async function retrieveBatchOfStripeEvents({ lastEventId, batchSize }: { 
     const myHeaders = new Headers();
 
     const requestOptions: RequestInit = {
-    method: "GET",
-    redirect: "follow"
+        method: "GET",
+        redirect: "follow"
     };
 
-    
-    const url = `https://api.stripe.com/v1/events?type=charge.succeeded&limit=${batchSize}${lastEventId ?`&starting_after=${lastEventId}` : ''}`;
+
+    const url = `https://api.stripe.com/v1/events?type=charge.succeeded&limit=${batchSize}${lastEventId ? `&starting_after=${lastEventId}` : ''}`;
     console.log("Fetching URL", url);
     return await fetch(url, requestOptions)
         .then((response) => response.json())

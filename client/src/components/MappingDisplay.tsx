@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { Mapping } from "../types.t";
-import { DataGrid, GridCellParams } from '@mui/x-data-grid';
+import { DataGrid, GridCellParams, GridRowModel } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { GridColDef } from '@mui/x-data-grid';
 import { isServerError, parseApiResponse } from "../actions/apiClient.ts";
 import { apiUrl } from "../config.ts";
 import { CONNECT_TIER_VALUES, ConnectTier, patchAccount } from "../actions/accountActions.ts";
 import TestUserCell from "./testUser/TestUserCell.tsx";
+
+function coerceToDate(value: unknown): Date | null {
+    if (value === null || value === undefined || value === "") return null;
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+    const d = new Date(String(value));
+    return Number.isNaN(d.getTime()) ? null : d;
+}
 
 const columns: GridColDef[] = [
     {
@@ -41,6 +48,14 @@ const columns: GridColDef[] = [
         headerName: 'Connect Tier',
         width: 220,
         renderCell: (params) => <ConnectTierCell mapping={params.row} />,
+    },
+    {
+        field: 'handoff_date',
+        headerName: 'Handoff Date',
+        width: 180,
+        type: 'date',
+        editable: true,
+        valueGetter: (_value, row) => coerceToDate((row as Row).handoff_date),
     },
     { field: 'auth_token', headerName: 'Auth Token', width: 200 },
     { field: 'isTestPassword', headerName: 'Test Password', width: 150, type: 'boolean' },
@@ -232,7 +247,7 @@ export default function MappingDisplay({ mapping, onRefresh }: { mapping: Mappin
 
       const handleOnCellClick = (params: GridCellParams) => {
             // Skip copy behavior for cells that own their own interactions.
-            if (params.field === 'connect_tier' || params.field === 'excludeAssist' || params.field === 'testUser') {
+            if (params.field === 'connect_tier' || params.field === 'excludeAssist' || params.field === 'testUser' || params.field === 'handoff_date') {
                 return;
             }
 
@@ -248,6 +263,30 @@ export default function MappingDisplay({ mapping, onRefresh }: { mapping: Mappin
             });
         };
 
+    // Only handoff_date is edited inline via the DataGrid's own editor; other
+    // fields use their own click-to-edit cell renderers.
+    const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
+        const before = coerceToDate((oldRow as Row).handoff_date)?.toISOString() ?? null;
+        const after = coerceToDate((newRow as Row).handoff_date)?.toISOString() ?? null;
+
+        if (before === after) {
+            return oldRow;
+        }
+
+        const accountName = (newRow as Row).Name;
+        if (!accountName) {
+            throw new Error("Cannot update handoff date: missing account name");
+        }
+
+        const result = await patchAccount(accountName, { handoffDate: after });
+
+        if (result && typeof result === "object" && "error" in result) {
+            throw new Error((result as { error: string }).error);
+        }
+
+        onRefresh?.();
+        return newRow;
+    };
 
     return <div style={{ width: '80vw', overflow: 'auto', cursor: isShowingCopyFeedback ? clipboardCursor : 'cell' }}>
         <ThemeProvider theme={darkTheme} >
@@ -267,6 +306,13 @@ export default function MappingDisplay({ mapping, onRefresh }: { mapping: Mappin
                     },
                 }}
                 onCellClick={handleOnCellClick}
+                processRowUpdate={processRowUpdate}
+                onProcessRowUpdateError={(err) => {
+                    console.error("Failed to update handoff date", err);
+                    alert(`Update failed: ${err instanceof Error ? err.message : String(err)}`);
+                }}
+                // handoff_date lives on the C4 Account row, not the OvrC side.
+                isCellEditable={(params) => params.field !== 'handoff_date' || (params.row.Source === 'C4' && Boolean(params.row.Name))}
                 />
         </ThemeProvider>
     </div>;

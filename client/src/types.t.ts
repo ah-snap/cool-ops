@@ -25,6 +25,7 @@ export type Mapping = {
     DCodes?: string;
     firmwareVersion?: string;
     connect_tier?: string | null;
+    handoff_date?: string | null;
     error?: any;
 }
 
